@@ -1,0 +1,4508 @@
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateBeratTblTagc`()
+BEGIN
+
+    DECLARE
+
+        dblqtyb FLOAT DEFAULT 0 ; DECLARE litemid FLOAT DEFAULT 0 ; 
+
+        DECLARE J INT DEFAULT 0 ; DECLARE i INT DEFAULT 0 ; 
+
+        DECLARE date1 DATE ; DECLARE lpackid FLOAT DEFAULT 0 ; 
+
+		DECLARE strnotr varchar(20); 	
+
+        DECLARE dblkonv FLOAT DEFAULT 0 ;
+
+        declare strpack varchar(20);
+
+        SELECT
+
+    COUNT(itemid)
+
+INTO j
+
+FROM
+
+    tbltagc
+
+WHERE
+
+    notagblowing="" and notagprinting="";
+
+    
+
+SET
+
+    i = 0 ; WHILE i < j
+
+DO
+
+SELECT
+
+    itemid,packid,beratb,adddate2,notrans
+
+INTO litemid,lpackid,dblqtyb,date1,strnotr
+
+FROM
+
+    tbltagc
+
+WHERE
+
+     notagblowing="" and notagprinting=""
+
+ORDER BY
+
+    adddate2,itemid
+
+LIMIT i, 1 ;
+
+
+
+set dblkonv=0;
+
+SELECT packtitle into strpack from tblpack where packid=lpackid;
+
+if strpack<>'' then
+
+	SELECT qty into dblkonv from tblpack2 where fk_packid=lpackid and fk_itemid=litemid;
+
+ ELSE
+
+ 	set dblkonv=0;
+
+    set lpackid=0;
+
+ end if;
+
+ 
+
+    if dblkonv=0 then 
+
+    	set dblkonv=1;
+
+        set lpackid=0;
+
+    end if;
+
+	UPDATE
+
+    tbltagc
+
+SET
+
+    berat = dblqtyb*dblkonv,updatedate=now(),packid=lpackid
+
+WHERE
+
+    notrans = strnotr AND itemid = litemid and notagblowing="" and notagprinting="";
+
+
+
+SET
+
+    i = i +1 ;
+
+END WHILE ; END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTrans`(IN `ptgl` DATE, IN `pItemid` INT, IN `pqtyro` DECIMAL(10,2), IN `pqtykg` DECIMAL(10,2), IN `lrecal` TINYINT)
+BEGIN
+
+
+
+	declare decQtyro float default 0;
+
+    declare decQtykg float default 0;
+
+    
+
+
+
+	if lrecal=1 THEN
+
+
+
+    	delete from tbltrans where saldoawal_ro=0 and saldoawal_kg=0 and buy_inro=0 and buy_inkg=0 and blow_inro=0 and blow_inkg=0 and print_outro=0 and print_outkg=0 and cut_outro=0 and cut_outkg=0 and sell_outro=0 and sell_outkg=0 and adj_outro=0 and adj_outkg=0 and itemid=pitemid;
+
+
+
+		select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltrans where itemid=pitemid and periode<ptgl order by periode desc LIMIT 0,1;
+
+
+
+		UPDATE tbltrans set saldoawal_ro=decQtyro, saldoawal_kg=decQtykg where itemid=pItemid and periode=ptgl;
+
+
+
+		UPDATE tbltrans set saldoawal_ro=saldoawal_ro+pqtyro,saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+
+
+
+        
+
+
+
+    ELSE
+
+
+
+		UPDATE tbltrans set saldoawal_ro=saldoawal_ro+pqtyro, saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+
+
+
+    end if;
+
+
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTransAll`(IN `pitemid` INT, IN `pawal` TINYINT, IN `pdate` DATE)
+BEGIN
+
+
+
+
+
+
+
+declare decQtyro float default 0;
+
+declare decQtykg float default 0;
+
+
+
+declare datePeriode date;
+
+
+
+DECLARE J Int DEFAULT 0;
+
+
+
+DECLARE i Int DEFAULT 0;
+
+
+
+declare date1 date;
+
+
+
+
+
+
+
+if pawal=1 THEN
+
+
+
+	select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg),periode into decQtyro,decQtykg, datePeriode from tbltrans where itemid=pitemid order by periode LIMIT 0,1;
+
+
+
+    if dateperiode<>0 THEN
+
+
+
+    	set dateperiode=date_add(dateperiode, INTERVAL 1 day);
+
+
+
+    end if;
+
+
+
+else
+
+
+
+
+
+
+
+	select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decqtykg from tbltrans where itemid=pitemid and periode<pdate order by periode desc LIMIT 0,1;
+
+
+
+    set dateperiode=pdate;
+
+
+
+end if;
+
+
+
+
+
+
+
+select count(itemid) into j from tbltrans where itemid=pitemid and periode>=dateperiode;
+
+
+
+
+
+
+
+set i=0;
+
+
+
+
+
+
+
+while i<j DO
+
+
+
+
+
+
+
+	select periode into date1 from tbltrans where itemid=pitemid and periode>=dateperiode order by periode LIMIT i,1;
+
+
+
+    
+
+
+
+	update tbltrans set saldoawal_ro=decQtyro,saldoawal_kg=decQtykg where periode=date1 and  itemid=pitemid;
+
+
+
+	
+
+
+
+	select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltrans where itemid=pitemid and periode=date1;
+
+
+
+    
+
+
+
+	set i=i+1;
+
+
+
+    
+
+
+
+end while;
+
+
+
+
+
+
+
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTransAllc`(IN `pitemid` INT, IN `pawal` TINYINT, IN `pdate` DATE)
+BEGIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+declare decQtyro float default 0;
+
+
+
+
+
+
+
+declare decQtykg float default 0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+declare datePeriode date;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DECLARE J Int DEFAULT 0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DECLARE i Int DEFAULT 0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+declare date1 date;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if pawal=1 THEN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	select (saldoawal_ro+buy_inro+cut_inro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+cut_inkg-sell_outkg-adj_outkg),periode into decQtyro,decQtykg, datePeriode from tbltransc where itemid=pitemid order by periode LIMIT 0,1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    if dateperiode<>0 THEN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    	set dateperiode=date_add(dateperiode, INTERVAL 1 day);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    end if;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+else
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	select (saldoawal_ro+buy_inro+cut_inro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+cut_inkg-sell_outkg-adj_outkg) into decQtyro,decqtykg from tbltransc where itemid=pitemid and periode<pdate order by periode desc LIMIT 0,1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    set dateperiode=pdate;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+end if;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+select count(itemid) into j from tbltransc where itemid=pitemid and periode>=dateperiode;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+set i=0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+while i<j DO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	select periode into date1 from tbltransc where itemid=pitemid and periode>=dateperiode order by periode LIMIT i,1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	update tbltransc set saldoawal_ro=decQtyro,saldoawal_kg=decQtykg where periode=date1 and  itemid=pitemid;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	select (saldoawal_ro+buy_inro+cut_inro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+cut_inkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltransc where itemid=pitemid and periode=date1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	set i=i+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+end while;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTransAllnotag`(IN `pitemid` VARCHAR(20), IN `pawal` TINYINT, IN `pdate` DATE)
+BEGIN
+declare decQtyro float default 0;
+declare decQtykg float default 0;
+declare datePeriode date;
+DECLARE J Int DEFAULT 0;
+DECLARE i Int DEFAULT 0;
+declare date1 date;
+if pawal=1 THEN
+    select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg),periode into decQtyro,decQtykg, datePeriode from tbltransnotag where itemid=pitemid order by periode LIMIT 0,1;
+    if dateperiode<>0 THEN
+        set dateperiode=date_add(dateperiode, INTERVAL 1 day);
+    end if;
+else
+    select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decqtykg from tbltransnotag where itemid=pitemid and periode<pdate order by periode desc LIMIT 0,1;
+    set dateperiode=pdate;
+end if;
+select count(itemid) into j from tbltransnotag where itemid=pitemid and periode>=dateperiode;
+set i=0;
+while i<j DO
+    select periode into date1 from tbltransnotag where itemid=pitemid and periode>=dateperiode order by periode LIMIT i,1;
+    update tbltransnotag set saldoawal_ro=decQtyro,saldoawal_kg=decQtykg where periode=date1 and itemid=pitemid;
+    select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltransnotag where itemid=pitemid and periode=date1;
+    set i=i+1;
+end while;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTransAllold`(IN `pitemid` INT, IN `pawal` TINYINT, IN `pdate` DATE)
+BEGIN
+declare decQtyro float default 0;
+declare decQtykg float default 0;
+declare datePeriode date;
+DECLARE J Int DEFAULT 0;
+DECLARE i Int DEFAULT 0;
+declare date1 date;
+if pawal=1 THEN
+    select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg),periode into decQtyro,decQtykg, datePeriode from tbltransold where itemid=pitemid order by periode LIMIT 0,1;
+    if dateperiode<>0 THEN
+        set dateperiode=date_add(dateperiode, INTERVAL 1 day);
+    end if;
+else
+    select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decqtykg from tbltransold where itemid=pitemid and periode<pdate order by periode desc LIMIT 0,1;
+    set dateperiode=pdate;
+end if;
+select count(itemid) into j from tbltransold where itemid=pitemid and periode>=dateperiode;
+set i=0;
+while i<j DO
+    select periode into date1 from tbltransold where itemid=pitemid and periode>=dateperiode order by periode LIMIT i,1;
+    update tbltransold set saldoawal_ro=decQtyro,saldoawal_kg=decQtykg where periode=date1 and  itemid=pitemid;
+    select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltransold where itemid=pitemid and periode=date1;
+    set i=i+1;
+end while;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTransAllp`(IN `pitemid` INT, IN `pawal` TINYINT, IN `pdate` DATE)
+BEGIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+declare decQtyro float default 0;
+
+
+
+declare decQtykg float default 0;
+
+
+
+
+
+
+
+declare datePeriode date;
+
+
+
+
+
+
+
+DECLARE J Int DEFAULT 0;
+
+
+
+
+
+
+
+DECLARE i Int DEFAULT 0;
+
+
+
+
+
+
+
+declare date1 date;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if pawal=1 THEN
+
+
+
+
+
+
+
+	select (saldoawal_ro+buy_inro+print_inro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+print_inkg-cut_outkg-sell_outkg-adj_outkg),periode into decQtyro,decQtykg, datePeriode from tbltransp where itemid=pitemid order by periode LIMIT 0,1;
+
+
+
+
+
+
+
+    if dateperiode<>0 THEN
+
+
+
+
+
+
+
+    	set dateperiode=date_add(dateperiode, INTERVAL 1 day);
+
+
+
+
+
+
+
+    end if;
+
+
+
+
+
+
+
+else
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	select (saldoawal_ro+buy_inro+print_inro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+print_inkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decqtykg from tbltransp where itemid=pitemid and periode<pdate order by periode desc LIMIT 0,1;
+
+
+
+
+
+
+
+    set dateperiode=pdate;
+
+
+
+
+
+
+
+end if;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+select count(itemid) into j from tbltransp where itemid=pitemid and periode>=dateperiode;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+set i=0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+while i<j DO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	select periode into date1 from tbltransp where itemid=pitemid and periode>=dateperiode order by periode LIMIT i,1;
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+	update tbltransp set saldoawal_ro=decQtyro,saldoawal_kg=decQtykg where periode=date1 and  itemid=pitemid;
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+	select (saldoawal_ro+buy_inro+print_inro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+print_inkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltransp where itemid=pitemid and periode=date1;
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+	set i=i+1;
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+end while;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTransc`(IN `ptgl` DATE, IN `pItemid` INT, IN `pqtyro` DECIMAL(10,2), IN `pqtykg` DECIMAL(10,2), IN `lrecal` TINYINT)
+BEGIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	declare decQtyro float default 0;
+
+
+
+
+
+
+
+    declare decQtykg float default 0;
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	if lrecal=1 THEN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    	delete from tbltransc where saldoawal_ro=0 and saldoawal_kg=0 and buy_inro=0 and buy_inkg=0 and cut_inro=0 and cut_inkg=0 and sell_outro=0 and sell_outkg=0 and adj_outro=0 and adj_outkg=0 and itemid=pitemid;
+
+
+
+
+
+
+
+
+
+
+
+
+
+		select (saldoawal_ro+buy_inro+cut_inro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+cut_inkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltransc where itemid=pitemid and periode<ptgl order by periode desc LIMIT 0,1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		UPDATE tbltransc set saldoawal_ro=decQtyro, saldoawal_kg=decQtykg where itemid=pItemid and periode=ptgl;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		UPDATE tbltransc set saldoawal_ro=saldoawal_ro+pqtyro,saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ELSE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		UPDATE tbltransc set saldoawal_ro=saldoawal_ro+pqtyro, saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    end if;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTransnotag`(IN `ptgl` DATE, IN `pItemid` VARCHAR(20), IN `pqtyro` DECIMAL(10,2), IN `pqtykg` DECIMAL(10,2), IN `lrecal` TINYINT)
+BEGIN
+    declare decQtyro float default 0;
+    declare decQtykg float default 0;
+    if lrecal=1 THEN
+        delete from tbltransnotag where saldoawal_ro=0 and saldoawal_kg=0 and buy_inro=0 and buy_inkg=0 and blow_inro=0 and blow_inkg=0 and print_outro=0 and print_outkg=0 and cut_outro=0 and cut_outkg=0 and sell_outro=0 and sell_outkg=0 and adj_outro=0 and adj_outkg=0 and itemid=pitemid;
+        select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltransnotag where itemid=pitemid and periode<ptgl order by periode desc LIMIT 0,1;
+        UPDATE tbltransnotag set saldoawal_ro=decQtyro, saldoawal_kg=decQtykg where itemid=pItemid and periode=ptgl;
+        UPDATE tbltransnotag set saldoawal_ro=saldoawal_ro+pqtyro,saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+    ELSE
+        UPDATE tbltransnotag set saldoawal_ro=saldoawal_ro+pqtyro, saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+    end if;
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTransold`(IN `ptgl` DATE, IN `pItemid` INT, IN `pqtyro` DECIMAL(10,2), IN `pqtykg` DECIMAL(10,2), IN `lrecal` TINYINT)
+BEGIN
+    declare decQtyro float default 0;
+    declare decQtykg float default 0;
+    if lrecal=1 THEN
+        delete from tbltransold where saldoawal_ro=0 and saldoawal_kg=0 and buy_inro=0 and buy_inkg=0 and blow_inro=0 and blow_inkg=0 and print_outro=0 and print_outkg=0 and cut_outro=0 and cut_outkg=0 and sell_outro=0 and sell_outkg=0 and adj_outro=0 and adj_outkg=0 and itemid=pitemid;
+        select (saldoawal_ro+buy_inro+blow_inro-print_outro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+blow_inkg-print_outkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltransold where itemid=pitemid and periode<ptgl order by periode desc LIMIT 0,1;
+        UPDATE tbltransold set saldoawal_ro=decQtyro, saldoawal_kg=decQtykg where itemid=pItemid and periode=ptgl;
+        UPDATE tbltransold set saldoawal_ro=saldoawal_ro+pqtyro,saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+    ELSE
+        UPDATE tbltransold set saldoawal_ro=saldoawal_ro+pqtyro, saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+    end if;
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateSaldoAwalTblTransp`(IN `ptgl` DATE, IN `pItemid` INT, IN `pqtyro` DECIMAL(10,2), IN `pqtykg` DECIMAL(10,2), IN `lrecal` TINYINT)
+BEGIN
+
+
+
+
+
+
+
+	declare decQtyro float default 0;
+
+
+
+    declare decQtykg float default 0;
+
+
+
+    
+
+
+
+
+
+
+
+	if lrecal=1 THEN
+
+
+
+
+
+
+
+    	delete from tbltransp where saldoawal_ro=0 and saldoawal_kg=0 and buy_inro=0 and buy_inkg=0 and print_inro=0 and print_inkg=0 and cut_outro=0 and cut_outkg=0 and sell_outro=0 and sell_outkg=0 and adj_outro=0 and adj_outkg=0 and itemid=pitemid;
+
+
+
+
+
+
+
+		select (saldoawal_ro+buy_inro+print_inro-cut_outro-sell_outro-adj_outro),(saldoawal_kg+buy_inkg+print_inkg-cut_outkg-sell_outkg-adj_outkg) into decQtyro,decQtykg from tbltransp where itemid=pitemid and periode<ptgl order by periode desc LIMIT 0,1;
+
+
+
+
+
+
+
+		UPDATE tbltransp set saldoawal_ro=decQtyro, saldoawal_kg=decQtykg where itemid=pItemid and periode=ptgl;
+
+
+
+
+
+
+
+		UPDATE tbltransp set saldoawal_ro=saldoawal_ro+pqtyro,saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+    ELSE
+
+
+
+
+
+
+
+		UPDATE tbltransp set saldoawal_ro=saldoawal_ro+pqtyro, saldoawal_kg=saldoawal_kg+pqtykg where itemid=pItemid and periode>ptgl;
+
+
+
+
+
+
+
+    end if;
+
+
+
+
+
+
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateAllTblTrans`()
+BEGIN
+DECLARE n Int DEFAULT 0;
+DECLARE i Int DEFAULT 0;
+DECLARE m Int DEFAULT 0;
+DECLARE j Int DEFAULT 0;
+declare litemid1 int DEFAULT 0;
+declare litemid2 int DEFAULT 0;
+declare dateTag1 date;
+declare dateTag2 date;
+declare decQty1 decimal(10,2) default 0;
+declare decQty2 decimal(10,2) default 0;
+declare lpackid int default 0;
+declare strUser varchar(20);
+declare strTipe varchar(20);
+declare intitem int DEFAULT 0;
+/*update tbltrans set saldoawal=0, total_out=0, total_in=0;*/
+delete from tbltrans;
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltag where adddate2>='2025-08-31' and noplan<>0 group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid INTO intitem FROM tbltag where adddate2>='2025-08-31' and noplan<>0 group by itemid limit i,1;
+    SELECT COUNT(itemid) INTO m FROM tbltag where adddate2>='2025-08-31' and noplan<>0 and itemid=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT itemid,adddate2,addby,'in',berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM tbltag 
+        where adddate2>='2025-08-31' and noplan<>0 and itemid=intitem LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'blowing'); 
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+SELECT COUNT(a.itemid) into n FROM (select y.itemid from tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.adddate2>='2025-08-31' and x.noplan<>0 group by y.itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT y.itemid INTO intitem FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.adddate2>='2025-08-31' and x.noplan<>0 group by y.itemid limit i,1;
+    SELECT COUNT(y.itemid) INTO m FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.adddate2>='2025-08-31' and x.noplan<>0 and y.itemid=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT y.itemid,x.adddate2,x.addby,'out',y.berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid 
+        FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where y.itemid=intitem and x.adddate2>='2025-08-31' and x.noplan<>0 LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'printing'); 
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltagjb where (tipejb='belib' or tipejb='jualb') group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid INTO intitem FROM tbltagjb where (tipejb='belib' or tipejb='jualb') group by itemid limit i,1;
+    SELECT COUNT(itemid) INTO m FROM tbltagjb where (tipejb='belib' or tipejb='jualb') and itemid=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT itemid,tgljb,addby,tipejb,berat,packid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM tbltagjb where itemid=intitem and (tipejb='belib' or tipejb='jualb') LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+   if strTipe='belib' then
+        call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'in',lpackid,strUser,1,'buy'); 
+   elseif strTipe='jualb' then
+        call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'out',lpackid,strUser,1,'sell'); 
+   end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+
+SELECT COUNT(a.itemid) into n FROM (select b.itemid from tbltag b inner join tbltagc c on b.notag=c.notagblowing 
+where c.berat=0  and c.notagblowing<>'' and b.adddate2>='2025-08-31' group by b.itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT a.itemid INTO intitem FROM (select b.itemid from tbltag b inner join tbltagc c on b.notag=c.notagblowing 
+    where c.berat=0 and c.notagblowing<>'' and b.adddate2>='2025-08-31' group by b.itemid) a limit i,1;
+    SELECT COUNT(a.itemid) INTO m FROM (select b.itemid from tbltag b inner join tbltagc c on b.notag=c.notagblowing and b.itemid=intitem 
+    where c.berat=0 and c.notagblowing<>'' and b.adddate2>='2025-08-31') a;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT a.itemid,a.adddate2,a.addby,'out',a.berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM 
+        (select b.itemid,c.adddate2,c.addby,b.berat from tbltag b inner join tbltagc c on b.notag=c.notagblowing and b.itemid=intitem 
+        where c.berat=0 and c.notagblowing<>'' and b.adddate2>='2025-08-31') a LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'cutting');         
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateAllTblTransc`()
+BEGIN
+DECLARE n Int DEFAULT 0;
+DECLARE i Int DEFAULT 0;
+DECLARE m Int DEFAULT 0;
+DECLARE j Int DEFAULT 0;
+declare litemid1 int DEFAULT 0;
+declare litemid2 int DEFAULT 0;
+declare dateTag1 date;
+declare dateTag2 date;
+declare decQty1 decimal(10,2) default 0;
+declare decQty2 decimal(10,2) default 0;
+declare lpackid int default 0;
+declare strUser varchar(20);
+declare strTipe varchar(20);
+declare intitem int DEFAULT 0;
+declare strTrans varchar(20);
+declare decQtyb1 decimal(10,2) default 0;
+declare decQtyb2 decimal(10,2) default 0;
+/*update tbltransc set saldoawal=0, total_out=0, total_in=0;*/
+delete from tbltransc;
+update tbltrans set cut_outro=0, cut_outkg=0;
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltrans group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid,periode INTO intitem,dateTag1 FROM tbltrans group by itemid limit i,1;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+update tbltransp set cut_outro=0, cut_outkg=0;
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltransp group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid,periode INTO intitem,dateTag1 FROM tbltransp group by itemid limit i,1;
+    call UpdateSaldoAwalTblTransAllp(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+SELECT COUNT(a.itemid) into n FROM (select b.itemid from tbltag b inner join tbltagc c on b.notag=c.notagblowing 
+where c.berat=0  and c.notagblowing<>'' and b.adddate2>='2025-08-31' group by b.itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT a.itemid INTO intitem FROM (select b.itemid from tbltag b inner join tbltagc c on b.notag=c.notagblowing 
+    where c.berat=0 and c.notagblowing<>'' and b.adddate2>='2025-08-31' group by b.itemid) a limit i,1;
+    SELECT COUNT(a.itemid) INTO m FROM (select b.itemid from tbltag b inner join tbltagc c on b.notag=c.notagblowing and b.itemid=intitem 
+    where c.berat=0 and c.notagblowing<>'' and b.adddate2>='2025-08-31') a;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT a.itemid,a.adddate2,a.addby,'out',a.berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM 
+        (select b.itemid,c.adddate2,c.addby,b.berat from tbltag b inner join tbltagc c on b.notag=c.notagblowing and b.itemid=intitem 
+        where c.berat=0 and c.notagblowing<>'' and b.adddate2>='2025-08-31') a LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'cutting');         
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+SELECT COUNT(a.itemid) into n FROM (select b.itemid from tbltagp b inner join tbltagc c on b.notag=c.notagprinting 
+where c.berat=0 and c.notagprinting<>'' and b.adddate2>='2025-08-31' group by b.itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT a.itemid INTO intitem FROM (select b.itemid from tbltagp b inner join tbltagc c on b.notag=c.notagprinting 
+    where c.berat=0 and c.notagprinting<>'' and b.adddate2>='2025-08-31' group by b.itemid) a limit i,1;
+    SELECT COUNT(a.itemid) INTO m FROM (select b.itemid from tbltagp b inner join tbltagc c on b.notag=c.notagprinting and b.itemid=intitem 
+    where c.berat=0 and c.notagprinting<>'' and b.adddate2>='2025-08-31') a;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT a.itemid,a.adddate2,a.addby,'out',a.berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM (select b.itemid,c.adddate2,c.addby,b.berat from tbltagp b inner join tbltagc c on b.notag=c.notagprinting and b.itemid=intitem where c.berat=0 and c.notagprinting<>'' and b.adddate2>='2025-08-31') a LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTransp (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'cutting');         
+        end if; 
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllp(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltagc where (notagblowing='' and notagprinting='') group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid INTO intitem FROM tbltagc where (notagblowing='' and notagprinting='') group by itemid limit i,1;
+    SELECT COUNT(itemid) INTO m FROM tbltagc where itemid=intitem and (notagblowing='' and notagprinting='');
+    SET j=0;
+    WHILE j<m DO 
+        SELECT itemid,adddate2,addby,'in',berat,packid,beratb into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,decQtyb2 FROM tbltagc where itemid=intitem and (notagblowing='' and notagprinting='') LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        set decQtyb1=decQtyb2;
+        call recalculateTblTransc (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'cutting',decQtyb1,decQtyb2,0); 
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllc(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateAllTblTransnotag`()
+BEGIN
+DECLARE n Int DEFAULT 0;
+DECLARE i Int DEFAULT 0;
+DECLARE m Int DEFAULT 0;
+DECLARE j Int DEFAULT 0;
+declare litemid1 varchar(20) DEFAULT '';
+declare litemid2 varchar(20) DEFAULT '';
+declare dateTag1 date;
+declare dateTag2 date;
+declare decQty1 decimal(10,2) default 0;
+declare decQty2 decimal(10,2) default 0;
+declare lpackid int default 0;
+declare strUser varchar(20);
+declare strTipe varchar(20);
+declare intitem varchar(20) DEFAULT '';
+
+delete from tbltransnotag;
+SELECT COUNT(notag) into n FROM tbltag where adddate2>='2025-08-31' and berat<>0;
+SET i=0;
+WHILE i<n DO 
+        SELECT notag,adddate2,addby,'in',berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM tbltag 
+        where adddate2>='2025-08-31' and berat<>0 and notag=intitem LIMIT i,1;
+        set litemid1='';
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'blowing'); 
+        end if;
+    call UpdateSaldoAwalTblTransAllnotag(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+SELECT COUNT(a.notag) into n FROM (select y.notag from tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.adddate2>='2025-08-31' and x.berat<>0 group by y.notag) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT y.notag INTO intitem FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.adddate2>='2025-08-31' and x.berat<>0 group by y.notag limit i,1;
+    SELECT COUNT(y.notag) INTO m FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.adddate2>='2025-08-31' and x.berat<>0 and y.notag=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT y.notag,x.adddate2,x.addby,'out',y.berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid 
+        FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where y.notag=intitem and x.adddate2>='2025-08-31' and x.berat<>0 LIMIT j,1;
+        set litemid1='';
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>'' then
+            call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'printing'); 
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllnotag(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+
+SELECT COUNT(a.notag) into n FROM (select notag from tbltagjb where (tipejb='belib' or tipejb='jualb') group by notag) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT notag INTO intitem FROM tbltagjb where (tipejb='belib' or tipejb='jualb') group by notag limit i,1;
+    SELECT COUNT(notag) INTO m FROM tbltagjb where (tipejb='belib' or tipejb='jualb') and notag=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT notag,tgljb,addby,tipejb,berat,packid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM tbltagjb 
+        where notag=intitem and (tipejb='belib' or tipejb='jualb') LIMIT j,1;
+        set litemid1='';
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+   if strTipe='belib' then
+        call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'in',lpackid,strUser,1,'buy'); 
+   elseif strTipe='jualb' then
+        call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'out',lpackid,strUser,1,'sell'); 
+   end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllnotag(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+
+SELECT COUNT(a.notag) into n FROM (select b.notag from tbltag b inner join tbltagc c on b.notag=c.notagblowing 
+where c.berat=0  and c.notagblowing<>'' and b.adddate2>='2025-08-31' group by b.notag) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT a.notag INTO intitem FROM (select b.notag from tbltag b inner join tbltagc c on b.notag=c.notagblowing 
+    where c.berat=0 and c.notagblowing<>'' and b.adddate2>='2025-08-31' group by b.notag) a limit i,1;
+    SELECT COUNT(a.notag) INTO m FROM (select b.notag from tbltag b inner join tbltagc c on b.notag=c.notagblowing and b.notag=intitem 
+    where c.berat=0 and c.notagblowing<>'' and b.adddate2>='2025-08-31') a;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT a.notag,a.adddate2,a.addby,'out',a.berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM 
+        (select b.notag,c.adddate2,c.addby,b.berat from tbltag b inner join tbltagc c on b.notag=c.notagblowing and b.notag=intitem 
+        where c.berat=0 and c.notagblowing<>'' and b.adddate2>='2025-08-31') a LIMIT j,1;
+        set litemid1='';
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>'' then
+            call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'cutting');         
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllnotag(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateAllTblTransold`()
+BEGIN
+DECLARE n Int DEFAULT 0;
+DECLARE i Int DEFAULT 0;
+DECLARE m Int DEFAULT 0;
+DECLARE j Int DEFAULT 0;
+declare litemid1 int DEFAULT 0;
+declare litemid2 int DEFAULT 0;
+declare dateTag1 date;
+declare dateTag2 date;
+declare decQty1 decimal(10,2) default 0;
+declare decQty2 decimal(10,2) default 0;
+declare lpackid int default 0;
+declare strUser varchar(20);
+declare strTipe varchar(20);
+declare intitem int DEFAULT 0;
+/*update tbltransold set saldoawal=0, total_out=0, total_in=0;*/
+delete from tbltransold;
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltag where noplan<>0 group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid INTO intitem FROM tbltag where noplan<>0 group by itemid limit i,1;
+    SELECT COUNT(itemid) INTO m FROM tbltag where noplan<>0 and itemid=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT itemid,adddate2,addby,'in',berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM tbltag 
+        where noplan<>0 and itemid=intitem LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTransold (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'blowing'); 
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllold(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+SELECT COUNT(a.itemid) into n FROM (select y.itemid from tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.noplan<>0 group by y.itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT y.itemid INTO intitem FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.noplan<>0 group by y.itemid limit i,1;
+    SELECT COUNT(y.itemid) INTO m FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.noplan<>0 and y.itemid=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT y.itemid,x.adddate2,x.addby,'out',y.berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid 
+        FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where y.itemid=intitem and x.noplan<>0 LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTransold (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'printing'); 
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllold(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltagjb where (tipejb='belib' or tipejb='jualb') group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid INTO intitem FROM tbltagjb where (tipejb='belib' or tipejb='jualb') group by itemid limit i,1;
+    SELECT COUNT(itemid) INTO m FROM tbltagjb where (tipejb='belib' or tipejb='jualb') and itemid=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT itemid,tgljb,addby,tipejb,berat,packid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM tbltagjb where itemid=intitem and (tipejb='belib' or tipejb='jualb') LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+   if strTipe='belib' then
+        call recalculateTblTransold (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'in',lpackid,strUser,1,'buy'); 
+   elseif strTipe='jualb' then
+        call recalculateTblTransold (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'out',lpackid,strUser,1,'sell'); 
+   end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllold(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+SELECT COUNT(a.itemid) into n FROM (select b.itemid from tbltag b inner join tbltagc c on b.notag=c.notagblowing 
+where c.berat=0  and c.notagblowing<>''  group by b.itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT a.itemid INTO intitem FROM (select b.itemid from tbltag b inner join tbltagc c on b.notag=c.notagblowing 
+    where c.berat=0 and c.notagblowing<>'' group by b.itemid) a limit i,1;
+    SELECT COUNT(a.itemid) INTO m FROM (select b.itemid from tbltag b inner join tbltagc c on b.notag=c.notagblowing and b.itemid=intitem 
+    where c.berat=0 and c.notagblowing<>'' ) a;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT a.itemid,a.adddate2,a.addby,'out',a.berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM 
+        (select b.itemid,c.adddate2,c.addby,b.berat from tbltag b inner join tbltagc c on b.notag=c.notagblowing and b.itemid=intitem 
+        where c.berat=0 and c.notagblowing<>'' ) a LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTransold (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'cutting');         
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllold(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateAllTblTransp`()
+BEGIN
+DECLARE n Int DEFAULT 0;
+DECLARE i Int DEFAULT 0;
+DECLARE m Int DEFAULT 0;
+DECLARE j Int DEFAULT 0;
+declare litemid1 int DEFAULT 0;
+declare litemid2 int DEFAULT 0;
+declare dateTag1 date;
+declare dateTag2 date;
+declare decQty1 decimal(10,2) default 0;
+declare decQty2 decimal(10,2) default 0;
+declare lpackid int default 0;
+declare strUser varchar(20);
+declare strTipe varchar(20);
+declare intitem int DEFAULT 0;
+declare strtagblow varchar(30);
+declare intitemblow int default 0; 
+declare dblberat decimal(10,2) default 0;
+/*update tbltransp set saldoawal=0, total_out=0, total_in=0;*/
+delete from tbltransp;
+update tbltrans set print_outro=0, print_outkg=0;
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltrans group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid,periode INTO intitem,dateTag1 FROM tbltrans group by itemid limit i,1;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltagp where adddate2>='2025-08-31' and noplan<>0 group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid INTO intitem FROM tbltagp where adddate2>='2025-08-31' and noplan<>0 group by itemid limit i,1;
+    SELECT COUNT(itemid) INTO m FROM tbltagp where adddate2>='2025-08-31' and noplan<>0 and itemid=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT itemid,adddate2,addby,'in',berat,0,notagblowing into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,strtagblow 
+        FROM tbltagp where adddate2>='2025-08-31' and noplan<>0 and itemid=intitem LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if strtagblow <>'' then
+            SELECT itemid,berat into intitemblow,dblberat FROM tbltag where notag=strtagblow and adddate2>='2025-08-31';
+            if intitemblow <> 0 then
+                call recalculateTblTrans (0,dateTag1,intitemblow,dateTag2,dblberat,dblberat,'out',lpackid,strUser,0,'printing'); 
+            end if;
+        end if;
+        call recalculateTblTransp (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'printing'); 
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllp(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+
+SELECT COUNT(a.itemid) into n FROM (select itemid from tbltagjb where (tipejb='belip' or tipejb='jualp') group by itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT itemid INTO intitem FROM tbltagjb where (tipejb='belip' or tipejb='jualp') group by itemid limit i,1;
+    SELECT COUNT(itemid) INTO m FROM tbltagjb where (tipejb='belip' or tipejb='jualp') and itemid=intitem;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT itemid,tgljb,addby,tipejb,berat,packid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM tbltagjb 
+        where (tipejb='belip' or tipejb='jualp') and itemid=intitem LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+   if strTipe='belip' then
+        call recalculateTblTransp (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'in',lpackid,strUser,1,'buy'); 
+   elseif strTipe='jualp' then
+        call recalculateTblTransp (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'out',lpackid,strUser,1,'sell'); 
+   end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllp(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+
+SELECT COUNT(a.itemid) into n FROM (select b.itemid from tbltagp b inner join tbltagc c on b.notag=c.notagprinting 
+where c.berat=0  and c.notagprinting<>'' and b.adddate2>='2025-08-31' group by b.itemid) a;
+SET i=0;
+WHILE i<n DO 
+    SELECT a.itemid INTO intitem FROM (select b.itemid from tbltagp b inner join tbltagc c on b.notag=c.notagprinting 
+    where c.berat=0 and c.notagprinting<>'' and b.adddate2>='2025-08-31' group by b.itemid) a limit i,1;
+    SELECT COUNT(a.itemid) INTO m FROM (select b.itemid from tbltagp b inner join tbltagc c on b.notag=c.notagprinting and b.itemid=intitem 
+    where c.berat=0 and c.notagprinting<>'' and b.adddate2>='2025-08-31') a;
+    SET j=0;
+    WHILE j<m DO 
+        SELECT a.itemid,a.adddate2,a.addby,'out',a.berat,0 into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid FROM 
+        (select b.itemid,c.adddate2,c.addby,b.berat from tbltagp b inner join tbltagc c on b.notag=c.notagprinting and b.itemid=intitem 
+        where c.berat=0 and c.notagprinting<>'' and b.adddate2>='2025-08-31') a LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTransp (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'cutting');         
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAllp(intitem,1,dateTag1);   
+    SET i = i + 1;
+END WHILE;
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateTblTrans`(IN `pitemid1` INT, IN `tgl1` DATE, IN `pitemid2` INT, IN `tgl2` DATE, IN `qty1` DECIMAL(10,2), IN `qty2` DECIMAL(10,2), IN `strTipe` VARCHAR(20), IN `packid` INT, IN `strUser` VARCHAR(20), IN `intskip` TINYINT, IN `strTipe2` VARCHAR(20))
+sp: BEGIN
+
+
+
+
+
+
+
+declare intItem int default 0;
+
+
+
+declare intItem2 int default 0;
+
+
+
+declare selisihQty float default 0;
+
+
+
+
+
+
+
+if tgl1=tgl2 THEN
+
+    if tgl2<'2025-08-31' then
+    leave sp;
+    end if;
+
+    if pitemid1=pitemid2 then /*tgl1 = tgl2 , pitemid1 = pitemid2 */
+
+		if pitemid1=0 THEN
+        	leave sp;
+        end if;
+
+        if qty1=qty2 THEN /*tgl1 = tgl2 , pitemid1 = pitemid2 , qty1 = qty2  */
+
+
+
+    		select itemid into intItem from tbltrans where itemid = pitemid1 and periode=tgl1;
+
+
+
+            if intitem=0 THEN
+
+
+
+				IF strTipe='in' then
+
+                
+
+                    IF strTipe2='buy' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,1,qty1,0,0,0,0,0,0,0,0,0,0);
+
+                    elseIF strTipe2='blowing' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,1,qty1,0,0,0,0,0,0,0,0);
+
+                    end if;
+
+                    
+
+
+
+                    if intskip=0 THEN
+
+
+
+                    	call updatesaldoawaltbltrans(tgl1,pitemid1,1,qty1,1);
+
+
+
+                     end if;
+
+
+
+                     
+
+
+
+                ELSEIF strTipe='out' then
+
+                	
+
+                    IF strTipe2='printing' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,1,qty1,0,0,0,0,0,0);
+
+                    elseIF strTipe2='cutting' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,1,qty1,0,0,0,0);
+
+                    elseIF strTipe2='sell' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,1,qty1,0,0);
+
+                    elseIF strTipe2='adj' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty1);                        
+
+                    end if;
+
+                    
+
+
+
+                    if intskip=0 THEN
+
+
+
+                    	call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty1,1);
+
+
+
+                    end if;
+
+
+
+                end if;
+
+
+
+                
+
+
+
+            end if;
+
+
+
+        else
+
+
+
+            set selisihQty=qty2-qty1;
+
+
+
+            select itemid into intItem from tbltrans where itemid = pitemid1 and periode=tgl1;
+
+
+
+            if intitem>0 THEN
+
+
+
+				IF strTipe='in' then
+
+
+
+                    if strtipe2='buy' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set buy_inkg=buy_inkg + selisihQty, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set buy_inkg=buy_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    elseif strtipe2='blowing' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set blow_inkg=blow_inkg + selisihQty, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set blow_inkg=blow_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    end if;
+
+
+
+                    if intskip=0 THEN
+
+                        if qty2=0 then
+
+                    	    call updatesaldoawaltbltrans(tgl1,pitemid1,-1,selisihqty,0);
+
+                        else
+
+                            call updatesaldoawaltbltrans(tgl1,pitemid1,0,selisihqty,0);
+
+                        end if;
+
+                    end if;
+
+                    
+
+                ELSEIF strTipe='out' then                
+
+                    
+
+                    IF strTipe2='printing' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set print_outkg=print_outkg + selisihQty, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set print_outkg=print_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    elseIF strTipe2='cutting' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set cut_outkg=cut_outkg + selisihQty, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set cut_outkg=cut_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    elseIF strTipe2='sell' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set sell_outkg=sell_outkg + selisihQty, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set sell_outkg=sell_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    elseIF strTipe2='adj' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set adj_outkg=adj_outkg + selisihQty, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set adj_outkg=adj_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    end if;                              
+
+
+
+                    if intskip=0 THEN
+
+                        if qty2=0 then
+
+                    	    call updatesaldoawaltbltrans(tgl1,pitemid1,1,-selisihqty,0);
+
+                        else
+
+                            call updatesaldoawaltbltrans(tgl1,pitemid1,0,-selisihqty,0);
+
+                        end if;
+
+                    end if;
+
+
+
+                end if;
+
+           
+
+            ELSE
+
+
+
+				IF strTipe='in' then
+
+                                    
+
+                    IF strTipe2='buy' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+
+                    elseIF strTipe2='blowing' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+
+                    end if;
+
+
+
+                    if intskip=0 THEN
+
+
+
+                    	call updatesaldoawaltbltrans(tgl1,pitemid1,1,qty2,1);
+
+
+
+                     end if;
+
+                    
+
+                ELSEIF strTipe='out' then
+
+                                    
+
+                    IF strTipe2='printing' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+
+                    elseIF strTipe2='cutting' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+
+                    elseIF strTipe2='sell' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+
+                    elseIF strTipe2='adj' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+
+                    end if;
+
+                    
+
+                    if intskip=0 THEN
+
+
+
+                    	call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty2,1);
+
+
+
+                    end if;
+
+                    
+
+
+
+                end if;
+
+
+
+                
+
+
+
+            end if;
+
+
+
+        end if;
+
+
+
+    ELSE  /* jika pitemid1 <> pitemid2 */
+
+
+
+        /*item lama*/
+		if pitemid1<>0 THEN
+
+
+        select itemid into intItem from tbltrans where itemid = pitemid1 and periode=tgl1;
+
+
+
+        if intitem>0 THEN
+
+
+
+			IF strTipe='in' then
+
+            
+
+                    if strtipe2='buy' then
+
+                        UPDATE tbltrans set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    elseif strtipe2='blowing' then
+
+                        UPDATE tbltrans set blow_inkg=blow_inkg - qty1, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    end if;
+
+                
+
+                if intskip=0 THEN
+
+                	call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty1,0);
+
+                end if;
+
+                
+
+            ELSEIF strTipe='out' then
+
+            
+
+                     IF strTipe2='printing' then
+
+                        UPDATE tbltrans set print_outkg=print_outkg - qty1, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    elseIF strTipe2='cutting' then
+
+                        UPDATE tbltrans set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    elseIF strTipe2='sell' then
+
+                        UPDATE tbltrans set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    elseIF strTipe2='adj' then
+
+                        UPDATE tbltrans set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    end if;                              
+
+               
+
+                if intskip=0 THEN
+
+
+
+                	call updatesaldoawaltbltrans(tgl1,pitemid1,1,qty1,0);
+
+
+
+                end if;
+
+                
+
+            end if;
+
+            
+
+        end if;
+end if;
+
+
+
+
+        /*item baru*/
+
+		if pitemid2<>0 THEN
+
+        select itemid into intItem from tbltrans where itemid = pitemid2 and periode=tgl2;
+
+
+
+        if intitem>0 THEN
+
+
+
+			IF strTipe='in' then
+
+            
+
+                    if strtipe2='buy' then
+
+                        UPDATE tbltrans set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+1 where itemid=pitemid2 and periode=tgl2;
+
+                    elseif strtipe2='blowing' then
+
+                        UPDATE tbltrans set blow_inkg=blow_inkg + qty2, blow_inro=blow_inro+1 where itemid=pitemid2 and periode=tgl2;
+
+                    end if;
+
+                
+
+                if intskip=0 THEN
+
+
+
+                	call updatesaldoawaltbltrans(tgl2,pitemid2,1,qty2,0);
+
+
+
+                end if;
+
+
+
+                
+
+
+
+            ELSEIF strTipe='out' then
+
+            
+
+                IF strTipe2='printing' then
+
+                    UPDATE tbltrans set print_outkg=print_outkg + qty2, print_outro=print_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='cutting' then
+
+                    UPDATE tbltrans set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='sell' then
+
+                    UPDATE tbltrans set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='adj' then
+
+                    UPDATE tbltrans set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                end if;                              
+
+
+
+                if intskip=0 THEN
+
+
+
+                	call updatesaldoawaltbltrans(tgl2,pitemid2,-1,-qty2,0);
+
+
+
+                end if;
+
+
+
+            end if;            
+
+
+
+        ELSE
+
+
+
+			IF strTipe='in' then            
+
+
+
+                IF strTipe2='buy' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+
+                elseIF strTipe2='blowing' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+
+                end if;                
+
+
+
+                if intskip=0 THEN
+
+
+
+                	call updatesaldoawaltbltrans(tgl2,pitemid2,1,qty2,1);
+
+
+
+                end if;
+
+                
+
+            ELSEIF strTipe='out' then
+
+            
+
+                IF strTipe2='printing' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+
+                elseIF strTipe2='cutting' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+
+                elseIF strTipe2='sell' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+
+                elseIF strTipe2='adj' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+
+                end if;
+
+                
+
+                if intskip=0 THEN
+
+
+
+                	call updatesaldoawaltbltrans(tgl2,pitemid2,-1,-qty2,1);
+
+
+
+                end if;
+
+
+
+            end if;            
+
+
+
+        end if;
+
+
+
+    end if;
+
+
+end if;
+
+
+
+
+ELSE  
+
+
+
+	/* tgl1 <> tgl2 */
+
+
+
+    /* if pitemid1=pitemid2 then pitemid1 = pitemid2 */
+
+
+
+    /*item lama*/    
+
+
+    if tgl1>='2025-08-31' and pitemid1<>0 then
+    select itemid into intItem from tbltrans where itemid = pitemid1 and periode=tgl1;
+
+
+
+     if intitem>0 THEN
+
+
+
+		IF strTipe='in' then
+
+        
+
+            if strtipe2='buy' then
+
+                UPDATE tbltrans set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+
+            elseif strtipe2='blowing' then
+
+                UPDATE tbltrans set blow_inkg=blow_inkg - qty1, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+
+            end if;
+
+            
+
+            if intskip=0 THEN
+
+
+
+            	call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty1,0);
+
+
+
+            end if;            
+
+
+
+        ELSEIF strTipe='out' then
+
+        
+
+            IF strTipe2='printing' then
+
+                UPDATE tbltrans set print_outkg=print_outkg - qty1, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+            elseIF strTipe2='cutting' then
+
+                UPDATE tbltrans set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+            elseIF strTipe2='sell' then
+
+                UPDATE tbltrans set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+            elseIF strTipe2='adj' then
+
+                UPDATE tbltrans set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+            end if;                              
+
+            
+
+            if intskip=0 THEN
+
+
+
+            	call updatesaldoawaltbltrans(tgl1,pitemid1,1,qty1,0);
+
+
+
+            end if;
+
+
+
+        end if;            
+
+
+
+  	end if;
+
+    end if;
+
+    /*item baru*/
+
+
+    if tgl2>='2025-08-31' and pitemid2<>0 then
+    select itemid into intItem2 from tbltrans where itemid = pitemid2 and periode=tgl2;
+
+
+
+     	if intitem2>0 THEN
+
+
+
+			IF strTipe='in' then
+
+                            
+
+                if strtipe2='buy' then
+
+                    UPDATE tbltrans set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+1 where itemid=pitemid2 and periode=tgl2;
+
+                elseif strtipe2='blowing' then
+
+                    UPDATE tbltrans set blow_inkg=blow_inkg + qty2, blow_inro=blow_inro+1 where itemid=pitemid2 and periode=tgl2;
+
+                end if;
+
+
+
+                if intskip=0 THEN
+
+
+
+                	call updatesaldoawaltbltrans(tgl2,pitemid2,1,qty2,0);
+
+
+
+                end if;
+
+                
+
+            ELSEIF strTipe='out' then
+
+            
+
+                IF strTipe2='printing' then
+
+                    UPDATE tbltrans set print_outkg=print_outkg + qty2, print_outro=print_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='cutting' then
+
+                    UPDATE tbltrans set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='sell' then
+
+                    UPDATE tbltrans set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='adj' then
+
+                    UPDATE tbltrans set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                end if;                              
+
+                
+
+                if intskip=0 THEN
+
+
+
+                	call updatesaldoawaltbltrans(tgl2,pitemid2,-1,-qty2,0);
+
+
+
+                end if;
+
+                
+
+            end if;            
+
+
+
+        ELSE
+
+
+
+			IF strTipe='in' then
+
+            
+
+                IF strTipe2='buy' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+
+                elseIF strTipe2='blowing' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+
+                end if;                
+
+                
+
+                if intskip=0 THEN
+
+
+
+                	call updatesaldoawaltbltrans(tgl2,pitemid2,1,qty2,1);
+
+
+
+                end if;
+
+                
+
+            ELSEIF strTipe='out' then
+
+            
+
+                IF strTipe2='printing' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+
+                elseIF strTipe2='cutting' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+
+                elseIF strTipe2='sell' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+
+                elseIF strTipe2='adj' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+
+                end if;
+
+                
+
+                if intskip=0 THEN
+
+
+
+                	call updatesaldoawaltbltrans(tgl2,pitemid2,-1,-qty2,1);
+
+
+
+                end if;
+
+
+
+            end if;
+
+
+
+       	end if;        
+
+    end if;
+
+
+
+End if;
+
+
+
+
+
+
+
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateTblTransc`(IN `pitemid1` INT, IN `tgl1` DATE, IN `pitemid2` INT, IN `tgl2` DATE, IN `qty1` DECIMAL(10,2), IN `qty2` DECIMAL(10,2), IN `strTipe` VARCHAR(20), IN `packid` INT, IN `strUser` VARCHAR(20), IN `intskip` TINYINT, IN `strTipe2` VARCHAR(20), IN `qtyb1` DECIMAL(10,2), IN `qtyb2` DECIMAL(10,2), IN `berbeda` TINYINT(1))
+sp:BEGIN
+declare intItem int default 0;
+declare intItem2 int default 0;
+declare selisihQty float default 0;
+declare selisihQtyb float default 0;
+if tgl1=tgl2 THEN
+    if pitemid1=pitemid2 then /*tgl1 = tgl2 , pitemid1 = pitemid2 */
+    	if pitemid1<>0 THEN
+ 
+        if berbeda=0 THEN /*tgl1 = tgl2 , pitemid1 = pitemid2 , qty1 = qty2  */
+            select itemid into intItem from tbltransc where itemid = pitemid1 and periode=tgl1;
+            if intitem=0 and (qty2<>0 or qtyb2<>0) THEN
+                IF strTipe='in' then
+                    IF strTipe2='buy' then
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,qtyb1,qty1,0,0,0,0,0,0);
+                    elseIF strTipe2='cutting' then
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,qtyb1,qty1,0,0,0,0);
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,qtyb1,qty1,1);
+                     end if;
+                ELSEIF strTipe='out' then
+                    IF strTipe2='sell' then
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,qtyb1,qty1,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,qtyb1,qty1);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,-qtyb1,-qty1,1);
+                    end if;
+                end if;
+            end if;
+        else
+            set selisihQty=qty2-qty1;
+            set selisihQtyb=qtyb2-qtyb1;
+            select itemid into intItem from tbltransc where itemid = pitemid1 and periode=tgl1;
+            if intitem>0 THEN
+                IF strTipe='in' then
+                    if strtipe2='buy' then
+                       UPDATE tbltransc set buy_inkg=buy_inkg + selisihQty, buy_inro=buy_inro + selisihQtyb where itemid=pitemid1 and periode=tgl1;
+                    elseif strtipe2='cutting' then
+                        UPDATE tbltransc set cut_inkg=cut_inkg + selisihQty, cut_inro=cut_inro + selisihQtyb where itemid=pitemid1 and periode=tgl1;
+                    end if;
+                    if intskip=0 THEN
+                           call updatesaldoawaltbltransc(tgl1,pitemid1,selisihQtyb,selisihqty,0);
+                    end if;
+                ELSEIF strTipe='out' then                
+                    IF strTipe2='sell' then
+                        UPDATE tbltransc set sell_outkg=sell_outkg + selisihQty, sell_outro=sell_outro + selisihQtyb where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='adj' then
+                        UPDATE tbltransc set adj_outkg=adj_outkg + selisihQty, adj_outro=adj_outro+selisihQtyb where itemid=pitemid1 and periode=tgl1;
+                    end if;                              
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,-selisihqtyb,-selisihqty,0);
+                    end if;
+                end if;
+            ELSE
+                IF strTipe='in' then
+                    IF strTipe2='buy' then
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,qtyb2,qty2,0,0,0,0,0,0);
+                    elseIF strTipe2='cutting' then
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,qtyb2,qty2,0,0,0,0);
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,qtyb2,qty2,1);
+                     end if;
+                ELSEIF strTipe='out' then
+                    IF strTipe2='sell' then
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,qtyb2,qty2,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,qtyb2,qty2);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,-qtyb2,-qty2,1);
+                    end if;
+                end if;
+            end if;
+        end if;
+end if;
+    ELSE  /* jika pitemid1 <> pitemid2 */
+        /*item lama*/
+        if pitemid1<>0 THEN
+
+        select itemid into intItem from tbltransc where itemid = pitemid1 and periode=tgl1;
+        if intitem>0 and (qty1<>0 or qtyb1<>0) THEN
+            IF strTipe='in' then
+                    if strtipe2='buy' then
+                        UPDATE tbltransc set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+                    elseif strtipe2='cutting' then
+                        UPDATE tbltransc set cut_inkg=cut_inkg - qty1, cut_inro=cut_inro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+                    end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransc(tgl1,pitemid1,-qtyb1,-qty1,0);
+                end if;
+            ELSEIF strTipe='out' then
+                    IF strTipe2='sell' then
+                        UPDATE tbltransc set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='adj' then
+                        UPDATE tbltransc set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+                    end if;                                     
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransc(tgl1,pitemid1,qtyb1,qty1,0);
+                end if;
+            end if;
+        end if;
+end if;
+        /*item baru*/
+        if pitemid2<>0 THEN
+        
+        select itemid into intItem from tbltransc where itemid = pitemid2 and periode=tgl2;
+        if intitem>0 and (qty2<>0 or qtyb2<>0) THEN
+            IF strTipe='in' then
+                    if strtipe2='buy' then
+                        UPDATE tbltransc set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+                    elseif strtipe2='cutting' then
+                        UPDATE tbltransc set cut_inkg=cut_inkg + qty2, cut_inro=cut_inro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+                    end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransc(tgl2,pitemid2,qtyb2,qty2,0);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='sell' then
+                    UPDATE tbltransc set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='adj' then
+                    UPDATE tbltransc set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+                end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransc(tgl2,pitemid2,-qtyb2,-qty2,0);
+                end if;
+            end if;            
+        ELSE
+            if (qty2<>0 or qtyb2<>0) then
+                IF strTipe='in' then            
+                    IF strTipe2='buy' then
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,qtyb2,qty2,0,0,0,0,0,0);
+                    elseIF strTipe2='cutting' then
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,qtyb2,qty2,0,0,0,0);
+                    end if;                
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransc(tgl2,pitemid2,qtyb2,qty2,1);
+                    end if;
+                ELSEIF strTipe='out' then
+                    IF strTipe2='sell' then
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,qtyb2,qty2,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,qtyb2,qty2);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransc(tgl2,pitemid2,-qtyb2,-qty2,1);
+                    end if;
+                end if;            
+            end if;
+        end if;
+    end if;
+end if;
+ELSE  
+    /* tgl1 <> tgl2 */
+    /* if pitemid1=pitemid2 then pitemid1 = pitemid2 */
+    /*item lama*/    
+    if pitemid1<>0 THEN
+    select itemid into intItem from tbltransc where itemid = pitemid1 and periode=tgl1;
+     if intitem>0 and (qty1<>0 or qtyb1<>0)  THEN
+        IF strTipe='in' then
+            if strtipe2='buy' then
+                UPDATE tbltransc set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+            elseif strtipe2='cutting' then
+                UPDATE tbltransc set cut_inkg=cut_inkg - qty1, cut_inro=cut_inro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+            end if;
+            if intskip=0 THEN
+                call updatesaldoawaltbltransc(tgl1,pitemid1,-qtyb1,-qty1,0);
+            end if;            
+        ELSEIF strTipe='out' then
+            IF strTipe2='sell' then
+                UPDATE tbltransc set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+            elseIF strTipe2='adj' then
+                UPDATE tbltransc set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+            end if;                              
+            if intskip=0 THEN
+                call updatesaldoawaltbltransc(tgl1,pitemid1,qtyb1,qty1,0);
+            end if;
+        end if;            
+      end if;
+end if;
+    /*item baru*/
+    if pitemid2<>0 THEN
+    select itemid into intItem2 from tbltransc where itemid = pitemid2 and periode=tgl2;
+         if intitem2>0 and (qty2<>0 or qtyb2<>0) THEN
+            IF strTipe='in' then
+                if strtipe2='buy' then
+                    UPDATE tbltransc set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+                elseif strtipe2='cutting' then
+                    UPDATE tbltransc set cut_inkg=cut_inkg + qty2, cut_inro=cut_inro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransc(tgl2,pitemid2,qtyb2,qty2,0);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='sell' then
+                    UPDATE tbltransc set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='adj' then
+                    UPDATE tbltransc set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+                end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransc(tgl2,pitemid2,-qtyb2,-qty2,0);
+                end if;
+            end if;            
+        ELSE
+            if (qty2<>0 or qtyb2<>0) then
+                IF strTipe='in' then
+                    IF strTipe2='buy' then
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,qtyb2,qty2,0,0,0,0,0,0);
+                    elseIF strTipe2='cutting' then
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,qtyb2,qty2,0,0,0,0);
+                    end if;                
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransc(tgl2,pitemid2,qtyb2,qty2,1);
+                    end if;
+                ELSEIF strTipe='out' then          
+                    IF strTipe2='sell' then
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,qtyb2,qty2,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,qtyb2,qty2);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransc(tgl2,pitemid2,-qtyb2,-qty2,1);
+                    end if;
+                end if;
+            end if;
+           end if;        
+    End if;
+end if;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateTblTransnotag`(IN `pitemid1` varchar(20), IN `tgl1` DATE, IN `pitemid2` varchar(20), IN `tgl2` DATE, IN `qty1` DECIMAL(10,2), IN `qty2` DECIMAL(10,2), IN `strTipe` VARCHAR(20), IN `packid` INT, IN `strUser` VARCHAR(20), IN `intskip` TINYINT, IN `strTipe2` VARCHAR(20))
+sp: BEGIN
+declare intItem varchar(20) default '';
+declare intItem2 varchar(20) default '';
+declare selisihQty float default 0;
+if tgl1=tgl2 THEN
+    if tgl2<'2025-08-31' then
+    leave sp;
+    end if;
+    if pitemid1=pitemid2 then /*tgl1 = tgl2 , pitemid1 = pitemid2 */
+        if pitemid1='' THEN
+            leave sp;
+        end if;
+        if qty1=qty2 THEN /*tgl1 = tgl2 , pitemid1 = pitemid2 , qty1 = qty2  */
+            select itemid into intItem from tbltransnotag where itemid = pitemid1 and periode=tgl1;
+            if intitem='' THEN
+                IF strTipe='in' then
+                    IF strTipe2='buy' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,1,qty1,0,0,0,0,0,0,0,0,0,0);
+                    elseIF strTipe2='blowing' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,1,qty1,0,0,0,0,0,0,0,0);
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransnotag(tgl1,pitemid1,1,qty1,1);
+                     end if;
+                ELSEIF strTipe='out' then
+                    IF strTipe2='printing' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,1,qty1,0,0,0,0,0,0);
+                    elseIF strTipe2='cutting' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,1,qty1,0,0,0,0);
+                    elseIF strTipe2='sell' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,1,qty1,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty1);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransnotag(tgl1,pitemid1,-1,-qty1,1);
+                    end if;
+                end if;
+            end if;
+        else
+            set selisihQty=qty2-qty1;
+            select itemid into intItem from tbltransnotag where itemid = pitemid1 and periode=tgl1;
+            if intitem<>'' THEN
+                IF strTipe='in' then
+                    if strtipe2='buy' then
+                        if qty2=0 then
+                            UPDATE tbltransnotag set buy_inkg=buy_inkg + selisihQty, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransnotag set buy_inkg=buy_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseif strtipe2='blowing' then
+                        if qty2=0 then
+                            UPDATE tbltransnotag set blow_inkg=blow_inkg + selisihQty, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransnotag set blow_inkg=blow_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    end if;
+                    if intskip=0 THEN
+                        if qty2=0 then
+                            call updatesaldoawaltbltransnotag(tgl1,pitemid1,-1,selisihqty,0);
+                        else
+                            call updatesaldoawaltbltransnotag(tgl1,pitemid1,0,selisihqty,0);
+                        end if;
+                    end if;
+                ELSEIF strTipe='out' then                
+                    IF strTipe2='printing' then
+                        if qty2=0 then
+                            UPDATE tbltransnotag set print_outkg=print_outkg + selisihQty, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransnotag set print_outkg=print_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseIF strTipe2='cutting' then
+                        if qty2=0 then
+                            UPDATE tbltransnotag set cut_outkg=cut_outkg + selisihQty, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransnotag set cut_outkg=cut_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseIF strTipe2='sell' then
+                        if qty2=0 then
+                            UPDATE tbltransnotag set sell_outkg=sell_outkg + selisihQty, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransnotag set sell_outkg=sell_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseIF strTipe2='adj' then
+                        if qty2=0 then
+                            UPDATE tbltransnotag set adj_outkg=adj_outkg + selisihQty, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransnotag set adj_outkg=adj_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    end if;                              
+                    if intskip=0 THEN
+                        if qty2=0 then
+                            call updatesaldoawaltbltransnotag(tgl1,pitemid1,1,-selisihqty,0);
+                        else
+                            call updatesaldoawaltbltransnotag(tgl1,pitemid1,0,-selisihqty,0);
+                        end if;
+                    end if;
+                end if;
+            ELSE
+                IF strTipe='in' then
+                    IF strTipe2='buy' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+                    elseIF strTipe2='blowing' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransnotag(tgl1,pitemid1,1,qty2,1);
+                     end if;
+                ELSEIF strTipe='out' then
+                    IF strTipe2='printing' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+                    elseIF strTipe2='cutting' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+                    elseIF strTipe2='sell' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransnotag values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransnotag(tgl1,pitemid1,-1,-qty2,1);
+                    end if;
+                end if;
+            end if;
+        end if;
+    ELSE  /* jika pitemid1 <> pitemid2 */
+        /*item lama*/
+        if pitemid1<>'' THEN
+        select itemid into intItem from tbltransnotag where itemid = pitemid1 and periode=tgl1;
+        if intitem<>'' THEN
+            IF strTipe='in' then
+                    if strtipe2='buy' then
+                        UPDATE tbltransnotag set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseif strtipe2='blowing' then
+                        UPDATE tbltransnotag set blow_inkg=blow_inkg - qty1, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+                    end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl1,pitemid1,-1,-qty1,0);
+                end if;
+            ELSEIF strTipe='out' then
+                     IF strTipe2='printing' then
+                        UPDATE tbltransnotag set print_outkg=print_outkg - qty1, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='cutting' then
+                        UPDATE tbltransnotag set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='sell' then
+                        UPDATE tbltransnotag set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='adj' then
+                        UPDATE tbltransnotag set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl1,pitemid1,1,qty1,0);
+                end if;
+            end if;
+        end if;
+end if;
+        /*item baru*/
+        if pitemid2<>'' THEN
+        select itemid into intItem from tbltransnotag where itemid = pitemid2 and periode=tgl2;
+        if intitem<>'' THEN
+            IF strTipe='in' then
+                    if strtipe2='buy' then
+                        UPDATE tbltransnotag set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+1 where itemid=pitemid2 and periode=tgl2;
+                    elseif strtipe2='blowing' then
+                        UPDATE tbltransnotag set blow_inkg=blow_inkg + qty2, blow_inro=blow_inro+1 where itemid=pitemid2 and periode=tgl2;
+                    end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl2,pitemid2,1,qty2,0);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='printing' then
+                    UPDATE tbltransnotag set print_outkg=print_outkg + qty2, print_outro=print_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='cutting' then
+                    UPDATE tbltransnotag set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='sell' then
+                    UPDATE tbltransnotag set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='adj' then
+                    UPDATE tbltransnotag set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl2,pitemid2,-1,-qty2,0);
+                end if;
+            end if;            
+        ELSE
+            IF strTipe='in' then            
+                IF strTipe2='buy' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+                elseIF strTipe2='blowing' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+                end if;                
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl2,pitemid2,1,qty2,1);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='printing' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+                elseIF strTipe2='cutting' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+                elseIF strTipe2='sell' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                elseIF strTipe2='adj' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl2,pitemid2,-1,-qty2,1);
+                end if;
+            end if;            
+        end if;
+    end if;
+end if;
+ELSE  
+    /* tgl1 <> tgl2 */
+    /* if pitemid1=pitemid2 then pitemid1 = pitemid2 */
+    /*item lama*/    
+    if tgl1>='2025-08-31' and pitemid1<>'' then
+    select itemid into intItem from tbltransnotag where itemid = pitemid1 and periode=tgl1;
+     if intitem<>'' THEN
+        IF strTipe='in' then
+            if strtipe2='buy' then
+                UPDATE tbltransnotag set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+            elseif strtipe2='blowing' then
+                UPDATE tbltransnotag set blow_inkg=blow_inkg - qty1, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+            end if;
+            if intskip=0 THEN
+                call updatesaldoawaltbltransnotag(tgl1,pitemid1,-1,-qty1,0);
+            end if;            
+        ELSEIF strTipe='out' then
+            IF strTipe2='printing' then
+                UPDATE tbltransnotag set print_outkg=print_outkg - qty1, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+            elseIF strTipe2='cutting' then
+                UPDATE tbltransnotag set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+            elseIF strTipe2='sell' then
+                UPDATE tbltransnotag set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+            elseIF strTipe2='adj' then
+                UPDATE tbltransnotag set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+            end if;                              
+            if intskip=0 THEN
+                call updatesaldoawaltbltransnotag(tgl1,pitemid1,1,qty1,0);
+            end if;
+        end if;            
+      end if;
+    end if;
+    /*item baru*/
+    if tgl2>='2025-08-31' and pitemid2<>'' then
+    select itemid into intItem2 from tbltransnotag where itemid = pitemid2 and periode=tgl2;
+         if intitem2<>'' THEN
+            IF strTipe='in' then
+                if strtipe2='buy' then
+                    UPDATE tbltransnotag set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+1 where itemid=pitemid2 and periode=tgl2;
+                elseif strtipe2='blowing' then
+                    UPDATE tbltransnotag set blow_inkg=blow_inkg + qty2, blow_inro=blow_inro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl2,pitemid2,1,qty2,0);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='printing' then
+                    UPDATE tbltransnotag set print_outkg=print_outkg + qty2, print_outro=print_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='cutting' then
+                    UPDATE tbltransnotag set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='sell' then
+                    UPDATE tbltransnotag set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='adj' then
+                    UPDATE tbltransnotag set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl2,pitemid2,-1,-qty2,0);
+                end if;
+            end if;            
+        ELSE
+            IF strTipe='in' then
+                IF strTipe2='buy' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+                elseIF strTipe2='blowing' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+                end if;                
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl2,pitemid2,1,qty2,1);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='printing' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+                elseIF strTipe2='cutting' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+                elseIF strTipe2='sell' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                elseIF strTipe2='adj' then
+                    insert into tbltransnotag values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransnotag(tgl2,pitemid2,-1,-qty2,1);
+                end if;
+            end if;
+           end if;        
+    end if;
+End if;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateTblTransold`(IN `pitemid1` INT, IN `tgl1` DATE, IN `pitemid2` INT, IN `tgl2` DATE, IN `qty1` DECIMAL(10,2), IN `qty2` DECIMAL(10,2), IN `strTipe` VARCHAR(20), IN `packid` INT, IN `strUser` VARCHAR(20), IN `intskip` TINYINT, IN `strTipe2` VARCHAR(20))
+sp: BEGIN
+declare intItem int default 0;
+declare intItem2 int default 0;
+declare selisihQty float default 0;
+if tgl1=tgl2 THEN
+    
+    if pitemid1=pitemid2 then /*tgl1 = tgl2 , pitemid1 = pitemid2 */
+        if pitemid1=0 THEN
+            leave sp;
+        end if;
+        if qty1=qty2 THEN /*tgl1 = tgl2 , pitemid1 = pitemid2 , qty1 = qty2  */
+            select itemid into intItem from tbltransold where itemid = pitemid1 and periode=tgl1;
+            if intitem=0 THEN
+                IF strTipe='in' then
+                    IF strTipe2='buy' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,1,qty1,0,0,0,0,0,0,0,0,0,0);
+                    elseIF strTipe2='blowing' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,1,qty1,0,0,0,0,0,0,0,0);
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransold(tgl1,pitemid1,1,qty1,1);
+                     end if;
+                ELSEIF strTipe='out' then
+                    IF strTipe2='printing' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,1,qty1,0,0,0,0,0,0);
+                    elseIF strTipe2='cutting' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,1,qty1,0,0,0,0);
+                    elseIF strTipe2='sell' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,1,qty1,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty1);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransold(tgl1,pitemid1,-1,-qty1,1);
+                    end if;
+                end if;
+            end if;
+        else
+            set selisihQty=qty2-qty1;
+            select itemid into intItem from tbltransold where itemid = pitemid1 and periode=tgl1;
+            if intitem>0 THEN
+                IF strTipe='in' then
+                    if strtipe2='buy' then
+                        if qty2=0 then
+                            UPDATE tbltransold set buy_inkg=buy_inkg + selisihQty, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransold set buy_inkg=buy_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseif strtipe2='blowing' then
+                        if qty2=0 then
+                            UPDATE tbltransold set blow_inkg=blow_inkg + selisihQty, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransold set blow_inkg=blow_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    end if;
+                    if intskip=0 THEN
+                        if qty2=0 then
+                            call updatesaldoawaltbltransold(tgl1,pitemid1,-1,selisihqty,0);
+                        else
+                            call updatesaldoawaltbltransold(tgl1,pitemid1,0,selisihqty,0);
+                        end if;
+                    end if;
+                ELSEIF strTipe='out' then                
+                    IF strTipe2='printing' then
+                        if qty2=0 then
+                            UPDATE tbltransold set print_outkg=print_outkg + selisihQty, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransold set print_outkg=print_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseIF strTipe2='cutting' then
+                        if qty2=0 then
+                            UPDATE tbltransold set cut_outkg=cut_outkg + selisihQty, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransold set cut_outkg=cut_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseIF strTipe2='sell' then
+                        if qty2=0 then
+                            UPDATE tbltransold set sell_outkg=sell_outkg + selisihQty, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransold set sell_outkg=sell_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseIF strTipe2='adj' then
+                        if qty2=0 then
+                            UPDATE tbltransold set adj_outkg=adj_outkg + selisihQty, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransold set adj_outkg=adj_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    end if;                              
+                    if intskip=0 THEN
+                        if qty2=0 then
+                            call updatesaldoawaltbltransold(tgl1,pitemid1,1,-selisihqty,0);
+                        else
+                            call updatesaldoawaltbltransold(tgl1,pitemid1,0,-selisihqty,0);
+                        end if;
+                    end if;
+                end if;
+            ELSE
+                IF strTipe='in' then
+                    IF strTipe2='buy' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+                    elseIF strTipe2='blowing' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransold(tgl1,pitemid1,1,qty2,1);
+                     end if;
+                ELSEIF strTipe='out' then
+                    IF strTipe2='printing' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+                    elseIF strTipe2='cutting' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+                    elseIF strTipe2='sell' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransold values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransold(tgl1,pitemid1,-1,-qty2,1);
+                    end if;
+                end if;
+            end if;
+        end if;
+    ELSE  /* jika pitemid1 <> pitemid2 */
+        /*item lama*/
+        if pitemid1<>0 THEN
+        select itemid into intItem from tbltransold where itemid = pitemid1 and periode=tgl1;
+        if intitem>0 THEN
+            IF strTipe='in' then
+                    if strtipe2='buy' then
+                        UPDATE tbltransold set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseif strtipe2='blowing' then
+                        UPDATE tbltransold set blow_inkg=blow_inkg - qty1, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+                    end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl1,pitemid1,-1,-qty1,0);
+                end if;
+            ELSEIF strTipe='out' then
+                     IF strTipe2='printing' then
+                        UPDATE tbltransold set print_outkg=print_outkg - qty1, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='cutting' then
+                        UPDATE tbltransold set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='sell' then
+                        UPDATE tbltransold set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='adj' then
+                        UPDATE tbltransold set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl1,pitemid1,1,qty1,0);
+                end if;
+            end if;
+        end if;
+end if;
+        /*item baru*/
+        if pitemid2<>0 THEN
+        select itemid into intItem from tbltransold where itemid = pitemid2 and periode=tgl2;
+        if intitem>0 THEN
+            IF strTipe='in' then
+                    if strtipe2='buy' then
+                        UPDATE tbltransold set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+1 where itemid=pitemid2 and periode=tgl2;
+                    elseif strtipe2='blowing' then
+                        UPDATE tbltransold set blow_inkg=blow_inkg + qty2, blow_inro=blow_inro+1 where itemid=pitemid2 and periode=tgl2;
+                    end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl2,pitemid2,1,qty2,0);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='printing' then
+                    UPDATE tbltransold set print_outkg=print_outkg + qty2, print_outro=print_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='cutting' then
+                    UPDATE tbltransold set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='sell' then
+                    UPDATE tbltransold set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='adj' then
+                    UPDATE tbltransold set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl2,pitemid2,-1,-qty2,0);
+                end if;
+            end if;            
+        ELSE
+            IF strTipe='in' then            
+                IF strTipe2='buy' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+                elseIF strTipe2='blowing' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+                end if;                
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl2,pitemid2,1,qty2,1);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='printing' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+                elseIF strTipe2='cutting' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+                elseIF strTipe2='sell' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                elseIF strTipe2='adj' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl2,pitemid2,-1,-qty2,1);
+                end if;
+            end if;            
+        end if;
+    end if;
+end if;
+ELSE  
+    /* tgl1 <> tgl2 */
+    /* if pitemid1=pitemid2 then pitemid1 = pitemid2 */
+    /*item lama*/    
+    if  pitemid1<>0 then
+    select itemid into intItem from tbltransold where itemid = pitemid1 and periode=tgl1;
+     if intitem>0 THEN
+        IF strTipe='in' then
+            if strtipe2='buy' then
+                UPDATE tbltransold set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+            elseif strtipe2='blowing' then
+                UPDATE tbltransold set blow_inkg=blow_inkg - qty1, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+            end if;
+            if intskip=0 THEN
+                call updatesaldoawaltbltransold(tgl1,pitemid1,-1,-qty1,0);
+            end if;            
+        ELSEIF strTipe='out' then
+            IF strTipe2='printing' then
+                UPDATE tbltransold set print_outkg=print_outkg - qty1, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+            elseIF strTipe2='cutting' then
+                UPDATE tbltransold set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+            elseIF strTipe2='sell' then
+                UPDATE tbltransold set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+            elseIF strTipe2='adj' then
+                UPDATE tbltransold set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+            end if;                              
+            if intskip=0 THEN
+                call updatesaldoawaltbltransold(tgl1,pitemid1,1,qty1,0);
+            end if;
+        end if;            
+      end if;
+    end if;
+    /*item baru*/
+    if pitemid2<>0 then
+    select itemid into intItem2 from tbltransold where itemid = pitemid2 and periode=tgl2;
+         if intitem2>0 THEN
+            IF strTipe='in' then
+                if strtipe2='buy' then
+                    UPDATE tbltransold set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+1 where itemid=pitemid2 and periode=tgl2;
+                elseif strtipe2='blowing' then
+                    UPDATE tbltransold set blow_inkg=blow_inkg + qty2, blow_inro=blow_inro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl2,pitemid2,1,qty2,0);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='printing' then
+                    UPDATE tbltransold set print_outkg=print_outkg + qty2, print_outro=print_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='cutting' then
+                    UPDATE tbltransold set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='sell' then
+                    UPDATE tbltransold set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='adj' then
+                    UPDATE tbltransold set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl2,pitemid2,-1,-qty2,0);
+                end if;
+            end if;            
+        ELSE
+            IF strTipe='in' then
+                IF strTipe2='buy' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+                elseIF strTipe2='blowing' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+                end if;                
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl2,pitemid2,1,qty2,1);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='printing' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+                elseIF strTipe2='cutting' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+                elseIF strTipe2='sell' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                elseIF strTipe2='adj' then
+                    insert into tbltransold values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransold(tgl2,pitemid2,-1,-qty2,1);
+                end if;
+            end if;
+           end if;        
+    end if;
+End if;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `recalculateTblTransp`(IN `pitemid1` INT, IN `tgl1` DATE, IN `pitemid2` INT, IN `tgl2` DATE, IN `qty1` DECIMAL(10,2), IN `qty2` DECIMAL(10,2), IN `strTipe` VARCHAR(20), IN `packid` INT, IN `strUser` VARCHAR(20), IN `intskip` TINYINT, IN `strTipe2` VARCHAR(20))
+sp: BEGIN
+declare intItem int default 0;
+declare intItem2 int default 0;
+declare selisihQty float default 0;
+if tgl1=tgl2 THEN
+if tgl2<'2025-08-31' then
+    leave sp;
+    end if;
+    if pitemid1=pitemid2 then /*tgl1 = tgl2 , pitemid1 = pitemid2 */
+    	if pitemid1=0 THEN
+        	leave sp;
+        end if;
+        if qty1=qty2 THEN /*tgl1 = tgl2 , pitemid1 = pitemid2 , qty1 = qty2  */
+            select itemid into intItem from tbltransp where itemid = pitemid1 and periode=tgl1;
+            if intitem=0 THEN
+                IF strTipe='in' then
+                    IF strTipe2='buy' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,1,qty1,0,0,0,0,0,0,0,0);
+                    elseIF strTipe2='printing' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,1,qty1,0,0,0,0,0,0);
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransp(tgl1,pitemid1,1,qty1,1);
+                     end if;
+                ELSEIF strTipe='out' then
+                    IF strTipe2='cutting' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,1,qty1,0,0,0,0);
+                    elseIF strTipe2='sell' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,1,qty1,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,1,qty1);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransp(tgl1,pitemid1,-1,-qty1,1);
+                    end if;
+                end if;
+            end if;
+        else
+            set selisihQty=qty2-qty1;
+            select itemid into intItem from tbltransp where itemid = pitemid1 and periode=tgl1;
+            if intitem>0 THEN
+                IF strTipe='in' then
+                    if strtipe2='buy' then
+                        if qty2=0 then
+                            UPDATE tbltransp set buy_inkg=buy_inkg + selisihQty, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransp set buy_inkg=buy_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseif strtipe2='printing' then
+                        if qty2=0 then
+                            UPDATE tbltransp set print_inkg=print_inkg + selisihQty, print_inro=print_inro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransp set print_inkg=print_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    end if;
+                    if intskip=0 THEN
+                        if qty2=0 then
+                            call updatesaldoawaltbltransp(tgl1,pitemid1,-1,selisihqty,0);
+                        else
+                            call updatesaldoawaltbltransp(tgl1,pitemid1,0,selisihqty,0);
+                        end if;
+                    end if;
+                ELSEIF strTipe='out' then                
+                    IF strTipe2='cutting' then
+                        if qty2=0 then
+                            UPDATE tbltransp set cut_outkg=cut_outkg + selisihQty, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransp set cut_outkg=cut_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseIF strTipe2='sell' then
+                        if qty2=0 then
+                            UPDATE tbltransp set sell_outkg=sell_outkg + selisihQty, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransp set sell_outkg=sell_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    elseIF strTipe2='adj' then
+                        if qty2=0 then
+                            UPDATE tbltransp set adj_outkg=adj_outkg + selisihQty, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+                        else
+                            UPDATE tbltransp set adj_outkg=adj_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+                        end if;
+                    end if;                              
+                    if intskip=0 THEN
+                        if qty2=0 then
+                            call updatesaldoawaltbltransp(tgl1,pitemid1,1,-selisihqty,0);
+                        else
+                            call updatesaldoawaltbltransp(tgl1,pitemid1,0,-selisihqty,0);
+                        end if;
+                    end if;
+                end if;
+            ELSE
+                IF strTipe='in' then
+                    IF strTipe2='buy' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,1,qty2,0,0,0,0,0,0,0,0);
+                    elseIF strTipe2='printing' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,1,qty2,0,0,0,0,0,0);
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransp(tgl1,pitemid1,1,qty2,1);
+                     end if;
+                ELSEIF strTipe='out' then
+                    IF strTipe2='cutting' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,1,qty2,0,0,0,0);
+                    elseIF strTipe2='sell' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                    elseIF strTipe2='adj' then
+                        insert into tbltransp values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+                    end if;
+                    if intskip=0 THEN
+                        call updatesaldoawaltbltransp(tgl1,pitemid1,-1,-qty2,1);
+                    end if;
+                end if;
+            end if;
+        end if;
+    ELSE  /* jika pitemid1 <> pitemid2 */
+        /*item lama*/
+        if pitemid1<>0 THEN
+        select itemid into intItem from tbltransp where itemid = pitemid1 and periode=tgl1;
+        if intitem>0 THEN
+            IF strTipe='in' then
+                    if strtipe2='buy' then
+                        UPDATE tbltransp set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseif strtipe2='printing' then
+                        UPDATE tbltransp set print_inkg=print_inkg - qty1, print_inro=print_inro-1 where itemid=pitemid1 and periode=tgl1;
+                    end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl1,pitemid1,-1,-qty1,0);
+                end if;
+            ELSEIF strTipe='out' then
+                    IF strTipe2='cutting' then
+                        UPDATE tbltransp set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='sell' then
+                        UPDATE tbltransp set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    elseIF strTipe2='adj' then
+                        UPDATE tbltransp set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+                    end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl1,pitemid1,1,qty1,0);
+                end if;
+            end if;
+        end if;
+        end if;
+        /*item baru*/
+        if pitemid2<>0 THEN
+        select itemid into intItem from tbltransp where itemid = pitemid2 and periode=tgl2;
+        if intitem>0 THEN
+            IF strTipe='in' then
+                if strtipe2='buy' then
+                    UPDATE tbltransp set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+1 where itemid=pitemid2 and periode=tgl2;
+                elseif strtipe2='printing' then
+                    UPDATE tbltransp set print_inkg=print_inkg + qty2, print_inro=print_inro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl2,pitemid2,1,qty2,0);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='cutting' then
+                    UPDATE tbltransp set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='sell' then
+                    UPDATE tbltransp set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='adj' then
+                    UPDATE tbltransp set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl2,pitemid2,-1,-qty2,0);
+                end if;
+            end if;            
+        ELSE
+            IF strTipe='in' then            
+                IF strTipe2='buy' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,1,qty2,0,0,0,0,0,0,0,0);
+                elseIF strTipe2='printing' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,1,qty2,0,0,0,0,0,0);
+                end if;                
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl2,pitemid2,1,qty2,1);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='cutting' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,1,qty2,0,0,0,0);
+                elseIF strTipe2='sell' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                elseIF strTipe2='adj' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl2,pitemid2,-1,-qty2,1);
+                end if;
+            end if;            
+        end if;
+    end if;
+    end if;
+ELSE  
+    /* tgl1 <> tgl2 */
+    /* if pitemid1=pitemid2 then pitemid1 = pitemid2 */
+    /*item lama*/    
+    if pitemid1<>0 THEN
+if tgl1>='2025-08-31' then
+    select itemid into intItem from tbltransp where itemid = pitemid1 and periode=tgl1;
+     if intitem>0 THEN
+        IF strTipe='in' then
+            if strtipe2='buy' then
+                UPDATE tbltransp set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-1 where itemid=pitemid1 and periode=tgl1;
+            elseif strtipe2='printing' then
+                UPDATE tbltransp set print_inkg=print_inkg - qty1, print_inro=print_inro-1 where itemid=pitemid1 and periode=tgl1;
+            end if;
+            if intskip=0 THEN
+                call updatesaldoawaltbltransp(tgl1,pitemid1,-1,-qty1,0);
+            end if;            
+        ELSEIF strTipe='out' then
+            IF strTipe2='cutting' then
+                UPDATE tbltransp set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+            elseIF strTipe2='sell' then
+                UPDATE tbltransp set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-1 where itemid=pitemid1 and periode=tgl1;
+            elseIF strTipe2='adj' then
+                UPDATE tbltransp set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+            end if;                              
+            if intskip=0 THEN
+                call updatesaldoawaltbltransp(tgl1,pitemid1,1,qty1,0);
+            end if;
+        end if;            
+      end if;
+end if;
+end if;
+    /*item baru*/
+    if pitemid2<>0 THEN
+if tgl2>='2025-08-31' then
+    select itemid into intItem2 from tbltransp where itemid = pitemid2 and periode=tgl2;
+         if intitem2>0 THEN
+            IF strTipe='in' then
+                if strtipe2='buy' then
+                    UPDATE tbltransp set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+1 where itemid=pitemid2 and periode=tgl2;
+                elseif strtipe2='printing' then
+                    UPDATE tbltransp set print_inkg=print_inkg + qty2, print_inro=print_inro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl2,pitemid2,1,qty2,0);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='cutting' then
+                    UPDATE tbltransp set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='sell' then
+                    UPDATE tbltransp set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+1 where itemid=pitemid2 and periode=tgl2;
+                elseIF strTipe2='adj' then
+                    UPDATE tbltransp set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+                end if;                              
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl2,pitemid2,-1,-qty2,0);
+                end if;
+            end if;            
+        ELSE
+            IF strTipe='in' then
+                IF strTipe2='buy' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,1,qty2,0,0,0,0,0,0,0,0);
+                elseIF strTipe2='printing' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,1,qty2,0,0,0,0,0,0);
+                end if;                
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl2,pitemid2,1,qty2,1);
+                end if;
+            ELSEIF strTipe='out' then
+                IF strTipe2='cutting' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,1,qty2,0,0,0,0);
+                elseIF strTipe2='sell' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                elseIF strTipe2='adj' then
+                    insert into tbltransp values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,0,0,1,qty2);                        
+                end if;
+                if intskip=0 THEN
+                    call updatesaldoawaltbltransp(tgl2,pitemid2,-1,-qty2,1);
+                end if;
+            end if;
+           end if;        
+end if;
+end if;
+End if;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updatejlhtagspp`()
+BEGIN
+
+DECLARE n Int DEFAULT 0;
+
+DECLARE i Int DEFAULT 0;
+
+DECLARE lnoplan Int DEFAULT 0;
+
+DECLARE fberat float DEFAULT 0;
+
+DECLARE fberat2 float DEFAULT 0;
+
+
+
+update tblspp set jlhtag=0;
+
+SELECT COUNT(*) FROM tblspp INTO n;
+
+SET i=1;
+
+WHILE i<n DO 
+
+	SELECT noplan into lnoplan FROM tblspp order by noplan LIMIT i,1;
+
+    SELECT count(noplan) into fberat FROM tbltag where noplan=lnoplan group by noplan;
+
+    SELECT count(noplan) into fberat2 FROM tbltag2 where noplan=lnoplan group by noplan;
+
+  	update tblspp set jlhtag = (if(fberat is null,0,fberat)+if(fberat2 is null,0,fberat2)) where noplan=lnoplan;
+
+  SET i = i + 1;
+
+END WHILE;
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updatelastdatemesin2`(IN `skodemesin` VARCHAR(20) CHARSET latin1)
+sp: BEGIN
+
+DECLARE lnoplan Int DEFAULT 0;
+
+DECLARE dsaldoplan decimal(18,2) DEFAULT 0;
+
+DECLARE snomesin varchar(20);
+
+DECLARE datelast datetime;
+
+/*DECLARE datelast2 datetime;*/
+
+
+if skodemesin='' then 
+   leave sp;
+end if;
+
+    update tblmesin set noplanterakhir=0,tglterakhir='0000-00-00 00:00:00',saldoplan=0 where kodemesin=skodemesin;
+
+
+
+    SELECT x.kodemesin,x.maxdate,x.noplan,x.saldoplan into snomesin,datelast,lnoplan,dsaldoplan FROM ( select a.maxdate,b.kodemesin,b.noplan,b.saldoplan from ((select max(`dbtagsm`.`tbltag`.`adddate`) AS `maxdate`,`dbtagsm`.`tbltag`.`kodemesin` AS `kodemesin` from `dbtagsm`.`tbltag` where (`dbtagsm`.`tbltag`.`berat` > 0) and `dbtagsm`.`tbltag`.`kodemesin`=skodemesin group by `dbtagsm`.`tbltag`.`kodemesin`) `a` join (select `dbtagsm`.`tbltag`.`adddate` AS `adddate`,`dbtagsm`.`tbltag`.`kodemesin` AS `kodemesin`,`dbtagsm`.`tbltag`.`noplan` AS `noplan`,(`dbtagsm`.`tblplanmesin`.`selesai` - `dbtagsm`.`tblplanmesin`.`target`) AS `saldoplan` from (`dbtagsm`.`tbltag` join `dbtagsm`.`tblplanmesin` on((`dbtagsm`.`tbltag`.`noplan` = `dbtagsm`.`tblplanmesin`.`noplan`))) where (`dbtagsm`.`tbltag`.`berat` > 0) and `dbtagsm`.`tbltag`.`kodemesin`=skodemesin) `b` on(((`a`.`maxdate` = `b`.`adddate`))))) x LIMIT 0,1;
+
+    
+
+    /*select tglterakhir into datelast2 from tblmesin where kodemesin=snomesin;*/
+
+    
+
+    /*if datelast>datelast2 THEN*/
+
+    update tblmesin set noplanterakhir=lnoplan,tglterakhir=datelast,saldoplan=dsaldoplan where kodemesin=snomesin;
+
+    /*end if;*/
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updatenextitembaru`()
+BEGIN
+
+DECLARE n Int DEFAULT 0;
+
+DECLARE i Int DEFAULT 0;
+
+DECLARE snomesin varchar(20);
+
+DECLARE lnoplan Int DEFAULT 0;
+
+DECLARE snama2 varchar(50);
+
+DECLARE dtarget2 decimal(18,2) DEFAULT 0;
+
+DECLARE lnextnoplan int DEFAULT 0;
+
+
+
+SELECT COUNT(*) FROM tblmesin INTO n;
+
+update tblmesin set nextitem=' ', nexttarget=0, nextnoplan=0;    
+
+
+
+SET i=0;
+
+WHILE i<n DO 
+
+	set snama2='';
+
+    set dtarget2=0;
+
+    set lnextnoplan=0;
+
+    
+
+	select kodemesin,noplanterakhir into snomesin,lnoplan from tblmesin LIMIT i,1;
+
+
+
+    select b.nama,(a.selesai-a.target),a.noplan into snama2,dtarget2,lnextnoplan from viewnextitembaru2 a inner join tblitem b on a.kodeitem=b.itemid where a.kodemesin=snomesin;
+
+    
+
+update tblmesin set nextitem=snama2, nexttarget=dtarget2, nextnoplan=lnextnoplan where kodemesin=snomesin;    
+
+    
+
+  SET i = i + 1;
+
+END WHILE;
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updatenextitembarubykodemesin`(IN `skm` VARCHAR(20) CHARSET latin1)
+BEGIN
+
+
+
+DECLARE snama2 varchar(50);
+
+DECLARE dtarget2 decimal(18,2) DEFAULT 0;
+
+DECLARE lnextnoplan int DEFAULT 0;
+
+
+
+update tblmesin set nextitem=' ', nexttarget=0, nextnoplan=0 where kodemesin=skm;    
+
+
+
+	set snama2=' ';
+
+    set dtarget2=0;
+
+    set lnextnoplan=0; 
+
+
+
+select b.nama,(a.selesai-a.target),a.noplan into snama2,dtarget2,lnextnoplan from viewnextitembaru2 a inner join tblitem b on a.kodeitem=b.itemid where a.kodemesin=skm;
+
+        
+
+    update tblmesin set nextitem=snama2, nexttarget=dtarget2, nextnoplan=lnextnoplan where kodemesin=skm;
+
+
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updatenextitemmesin`()
+BEGIN
+
+DECLARE n Int DEFAULT 0;
+
+DECLARE i Int DEFAULT 0;
+
+DECLARE lnoplan Int DEFAULT 0;
+
+DECLARE snama2 varchar(50);
+
+DECLARE snomesin varchar(20);
+
+DECLARE dtarget2 decimal(18,2) DEFAULT 0;
+
+DECLARE lnextnoplan int DEFAULT 0;
+
+
+
+SELECT COUNT(*) FROM tblmesin INTO n;
+
+SET i=0;
+
+WHILE i<n DO 
+
+	set snama2='';
+
+    set dtarget2=0;
+
+    set lnextnoplan=0;
+
+    
+
+	select kodemesin,noplanterakhir into snomesin,lnoplan from tblmesin LIMIT i,1;
+
+    /*select noplanterakhir into lnoplan from tblmesin LIMIT i,1;*/
+
+    
+
+    select ab.nextitem,ab.target2,ab.noplan into snama2,dtarget2,lnextnoplan from (select k.mindate,l.noplan,l.kodemesin,l.nama2 as nextitem,l.target2 from (select min(maxdate) as mindate,kodemesin from viewnextitem123 group by kodemesin) k inner join (select maxdate,noplan,kodemesin,nama2,target2 from viewnextitem123) l on k.kodemesin=l.kodemesin and k.mindate=l.maxdate) ab where ab.kodemesin=snomesin and ab.noplan<>lnoplan;
+
+    
+
+	/*select ab.target2,ab.noplan into dtarget2,lnextnoplan from (select k.mindate,l.noplan,l.kodemesin,l.nama2 as nextitem,l.target2 from (select min(maxdate) as mindate,kodemesin from viewnextitem123 group by kodemesin) k inner join (select maxdate,noplan,kodemesin,nama2,target2 from viewnextitem123) l on k.kodemesin=l.kodemesin and k.mindate=l.maxdate) ab where ab.kodemesin=snomesin and ab.noplan<>lnoplan;*/
+
+    
+
+    update tblmesin set nextitem=snama2, nexttarget=dtarget2, nextnoplan=lnextnoplan where kodemesin=snomesin;
+
+    
+
+  SET i = i + 1;
+
+END WHILE;
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updatenextitemmesinbynoplan`(IN `pnoplan` INT)
+BEGIN
+
+DECLARE n Int DEFAULT 0;
+
+DECLARE i Int DEFAULT 0;
+
+DECLARE lnoplan Int DEFAULT 0;
+
+DECLARE snama2 varchar(50);
+
+DECLARE snomesin varchar(20);
+
+DECLARE snomesinawal varchar(20);
+
+DECLARE dtarget2 decimal(18,2) DEFAULT 0;
+
+DECLARE lnextnoplan int DEFAULT 0;
+
+
+
+select count(*) from (select min(maxdate) as maxdate,kodemesin from viewnextitem123 group by kodemesin) k inner join (select maxdate,noplan,kodemesin,nama2,target2 from viewnextitem123) l on k.kodemesin=l.kodemesin and k.maxdate=l.maxdate where l.noplan=pnoplan INTO n;
+
+/*SELECT COUNT(*) FROM tblmesin where nextnoplan=pnoplan INTO n;*/
+
+    update tblmesin set nextitem='', nexttarget=0, nextnoplan=0 where nextnoplan=pnoplan;
+
+    
+
+SET i=0;
+
+WHILE i<n DO
+
+	set snama2='';
+
+    set dtarget2=0;
+
+    set lnextnoplan=0;
+
+    
+
+select l.kodemesin into snomesinawal from (select min(maxdate) as maxdate,kodemesin from viewnextitem123 group by kodemesin) k inner join (select maxdate,noplan,kodemesin,nama2,target2 from viewnextitem123) l on k.kodemesin=l.kodemesin and k.maxdate=l.maxdate where l.noplan=pnoplan LIMIT i,1;
+
+
+
+/*SELECT kodemesin,noplanterakhir into snomesin,lnoplan FROM tblmesin where nextnoplan=pnoplan LIMIT i,1;*/
+
+
+
+select kodemesin,noplanterakhir into snomesin,lnoplan from tblmesin where kodemesin=snomesinawal;
+
+    
+
+    select ab.nextitem,ab.target2,ab.noplan into snama2,dtarget2,lnextnoplan from (select k.mindate,l.noplan,l.kodemesin,l.nama2 as nextitem,l.target2 from (select min(maxdate) as mindate,kodemesin from viewnextitem123 group by kodemesin) k inner join (select maxdate,noplan,kodemesin,nama2,target2 from viewnextitem123) l on k.kodemesin=l.kodemesin and k.mindate=l.maxdate) ab where ab.kodemesin=snomesin and ab.noplan<>lnoplan;
+
+    
+
+    update tblmesin set nextitem=snama2, nexttarget=dtarget2, nextnoplan=lnextnoplan where kodemesin=snomesin;
+
+  SET i = i + 1;
+
+END WHILE;    
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updateselesainoplan`()
+BEGIN
+
+DECLARE n Int DEFAULT 0;
+
+DECLARE i Int DEFAULT 0;
+
+DECLARE lnoplan Int DEFAULT 0;
+
+DECLARE fberat float DEFAULT 0;
+
+DECLARE fberat2 float DEFAULT 0;
+
+
+
+update tblplanmesin set selesai=0;
+
+SELECT COUNT(*) FROM tblplanmesin INTO n;
+
+SET i=0;
+
+WHILE i<n DO 
+
+	SELECT noplan into lnoplan FROM tblplanmesin order by noplan LIMIT i,1;
+
+    SELECT sum(berat) into fberat FROM tbltag where noplan=lnoplan;
+
+    SELECT sum(berat) into fberat2 FROM tbltag2 where noplan=lnoplan;
+
+  	update tblplanmesin set selesai = (if(fberat is null,0,fberat)+if(fberat2 is null,0,fberat2)) where noplan=lnoplan;
+
+  SET i = i + 1;
+
+END WHILE;
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updateselesainoplanp`()
+BEGIN
+
+DECLARE n Int DEFAULT 0;
+
+DECLARE i Int DEFAULT 0;
+
+DECLARE lnoplan Int DEFAULT 0;
+
+DECLARE fberat float DEFAULT 0;
+
+
+
+update tblplanp set selesai=0;
+
+SELECT COUNT(*) FROM tblplanp INTO n;
+
+SET i=0;
+
+WHILE i<n DO 
+
+	SELECT noplan into lnoplan FROM tblplanp order by noplan LIMIT i,1;
+
+    SELECT sum(berat) into fberat FROM tbltagp where noplan=lnoplan;
+
+  	update tblplanp set selesai = if(fberat is null,0,fberat) where noplan=lnoplan;
+
+  SET i = i + 1;
+
+END WHILE;
+
+End$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updateselesaiprintingpadablowing`()
+BEGIN
+
+DECLARE n Int DEFAULT 0;
+
+DECLARE i Int DEFAULT 0;
+
+DECLARE lnoplan Int DEFAULT 0;
+
+DECLARE fberat float DEFAULT 0;
+
+declare snotag varchar(30);
+
+
+
+update tblplanmesin set selesaiprinting=0;
+
+SELECT COUNT(*) FROM tblplanmesin INTO n;
+
+SET i=0;
+
+WHILE i<n DO 
+
+	SELECT noplan into lnoplan FROM tblplanmesin order by noplan LIMIT i,1;
+
+    SELECT sum(berat) into fberat FROM tbltagp where noplanblowing=lnoplan;
+
+  	update tblplanmesin set selesaiprinting = if(fberat is null,0,fberat) where noplan=lnoplan;
+
+  SET i = i + 1;
+
+END WHILE;
+
+
+
+update tbltag set selesaiprinting=0;
+
+SELECT COUNT(*) FROM tbltag INTO n;
+
+SET i=0;
+
+WHILE i<n DO 
+
+	SELECT notag into snotag FROM tbltag order by notag LIMIT i,1;
+
+    SELECT sum(berat) into fberat FROM tbltagp where notagblowing=snotag;
+
+  	update tbltag set selesaiprinting = if(fberat is null,0,fberat) where notag=snotag;
+
+  SET i = i + 1;
+
+END WHILE;
+
+End$$
+DELIMITER ;
