@@ -302,7 +302,7 @@ if tgl1=tgl2 THEN
 
 						if qty2<>0 then
 
-                        	insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+                        	insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,0,0,0,0,packid,qty2,0,0);
 
 						end if;
 
@@ -322,7 +322,7 @@ if tgl1=tgl2 THEN
 
 							if qty2<>0 then
 
-                        		call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty2,1);
+                        		call updatesaldoawaltbltrans(tgl1,pitemid1,-packid,-qty2,1);
 
 							end if;
 
