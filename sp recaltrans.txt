@@ -1,0 +1,777 @@
+sp: BEGIN
+
+declare intItem int default 0;
+
+declare intItem2 int default 0;
+
+declare selisihQty float default 0;
+
+
+
+if tgl1=tgl2 THEN
+
+    if tgl2<'2025-08-31' then
+
+        leave sp;
+
+    end if;
+
+
+
+    if pitemid1=pitemid2 then /*tgl1 = tgl2 , pitemid1 = pitemid2 */
+
+        if pitemid1=0 THEN
+
+            leave sp;
+
+        end if;
+
+
+
+        if qty1=qty2 THEN /*tgl1 = tgl2 , pitemid1 = pitemid2 , qty1 = qty2  */
+
+            select itemid into intItem from tbltrans where itemid = pitemid1 and periode=tgl1;
+
+
+
+            if intitem=0 THEN
+
+                IF strTipe='in' then
+
+                    IF strTipe2='buy' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,packid,qty1,0,0,0,0,0,0,0,0,0,0);
+
+                    elseIF strTipe2='blowing' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,1,qty1,0,0,0,0,0,0,0,0);
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						IF strTipe2='buy' then
+
+                        	call updatesaldoawaltbltrans(tgl1,pitemid1,packid,qty1,1);
+
+						else
+
+							call updatesaldoawaltbltrans(tgl1,pitemid1,1,qty1,1);
+
+						end if;
+
+                    end if;
+
+                ELSEIF strTipe='out' then
+
+                    IF strTipe2='printing' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,1,qty1,0,0,0,0,0,0);
+
+                    elseIF strTipe2='cutting' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,0,0,1,qty1,0,0,0,0);
+
+                    elseIF strTipe2='sell' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,0,0,0,0,packid,qty1,0,0);
+
+                    elseIF strTipe2='adj' then
+
+                        insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,qty1);
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						IF strTipe2='sell' then
+
+                        	call updatesaldoawaltbltrans(tgl1,pitemid1,-packid,-qty1,1);
+
+						else
+
+							call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty1,1);
+
+						end if;
+
+                    end if;
+
+                end if;
+
+            end if;
+
+        else
+
+            set selisihQty=qty2-qty1;
+
+            select itemid into intItem from tbltrans where itemid = pitemid1 and periode=tgl1;
+
+
+
+            if intitem>0 THEN
+
+                IF strTipe='in' then
+
+                    if strtipe2='buy' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set buy_inkg=buy_inkg + selisihQty, buy_inro=buy_inro-packid where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set buy_inkg=buy_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    elseif strtipe2='blowing' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set blow_inkg=blow_inkg + selisihQty, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set blow_inkg=blow_inkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    end if;
+
+                    if intskip=0 THEN
+
+                        if qty2=0 then
+
+							IF strTipe2='buy' then
+
+                            	call updatesaldoawaltbltrans(tgl1,pitemid1,-packid,selisihqty,0);
+
+							else
+
+								call updatesaldoawaltbltrans(tgl1,pitemid1,-1,selisihqty,0);
+
+							end if;
+
+                        else
+
+                            call updatesaldoawaltbltrans(tgl1,pitemid1,0,selisihqty,0);
+
+                        end if;
+
+                    end if;
+
+                ELSEIF strTipe='out' then
+
+                    IF strTipe2='printing' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set print_outkg=print_outkg + selisihQty, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set print_outkg=print_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    elseIF strTipe2='cutting' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set cut_outkg=cut_outkg + selisihQty, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set cut_outkg=cut_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    elseIF strTipe2='sell' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set sell_outkg=sell_outkg + selisihQty, sell_outro=sell_outro-packid where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set sell_outkg=sell_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    elseIF strTipe2='adj' then
+
+                        if qty2=0 then
+
+                            UPDATE tbltrans set adj_outkg=adj_outkg + selisihQty, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                        else
+
+                            UPDATE tbltrans set adj_outkg=adj_outkg + selisihQty where itemid=pitemid1 and periode=tgl1;
+
+                        end if;
+
+                    end if;
+
+                    if intskip=0 THEN
+
+                        if qty2=0 then
+
+							IF strTipe2='sell' then
+
+                            	call updatesaldoawaltbltrans(tgl1,pitemid1,packid,-selisihqty,0);
+
+							else
+
+								call updatesaldoawaltbltrans(tgl1,pitemid1,1,-selisihqty,0);
+
+							end if;
+
+                        else
+
+                            call updatesaldoawaltbltrans(tgl1,pitemid1,0,-selisihqty,0);
+
+                        end if;
+
+                    end if;
+
+                end if;
+
+            ELSE
+
+                IF strTipe='in' then
+
+                    IF strTipe2='buy' then
+
+						if qty2<>0 then
+
+							insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,1,qty2,0,0,0,0,0,0,0,0,0,0);
+
+						end if;
+
+                    elseIF strTipe2='blowing' then
+
+						if qty2<>0 then
+
+                        	insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+
+						end if;
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						IF strTipe2='buy' then
+
+							if qty2<>0 then
+
+                        		call updatesaldoawaltbltrans(tgl1,pitemid1,1,qty2,1);
+
+							end if;
+
+						else
+
+							if qty2<>0 then
+
+								call updatesaldoawaltbltrans(tgl1,pitemid1,1,qty2,1);
+
+							end if;
+
+						end if;
+
+                    end if;
+
+                ELSEIF strTipe='out' then
+
+                    IF strTipe2='printing' then
+
+						if qty2<>0 then
+
+                        	insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+
+						end if;
+
+                    elseIF strTipe2='cutting' then
+
+						if qty2<>0 then
+
+                        	insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+
+						end if;
+
+                    elseIF strTipe2='sell' then
+
+						if qty2<>0 then
+
+                        	insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,0,0,0,0,1,qty2,0,0);
+
+						end if;
+
+                    elseIF strTipe2='adj' then
+
+						if qty2<>0 then
+
+                        	insert into tbltrans values(tgl1,now(),strUser,pitemid1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);
+
+						end if;
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						IF strTipe2='sell' then
+
+							if qty2<>0 then
+
+                        		call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty2,1);
+
+							end if;
+
+						else
+
+							if qty2<>0 then
+
+								call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty2,1);
+
+							end if;
+
+						end if;
+
+                    end if;
+
+                end if;
+
+            end if;
+
+        end if;
+
+    ELSE  /* jika pitemid1 <> pitemid2 */
+
+        /*item lama*/
+
+        if pitemid1<>0 THEN
+
+            select itemid into intItem from tbltrans where itemid = pitemid1 and periode=tgl1;
+
+            if intitem>0 THEN
+
+                IF strTipe='in' then
+
+                    if strtipe2='buy' then
+
+                        UPDATE tbltrans set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-packid where itemid=pitemid1 and periode=tgl1;
+
+                    elseif strtipe2='blowing' then
+
+                        UPDATE tbltrans set blow_inkg=blow_inkg - qty1, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						if strtipe2='buy' then
+
+							call updatesaldoawaltbltrans(tgl1,pitemid1,-packid,-qty1,0);
+
+						else
+
+                        	call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty1,0);
+
+						end if;
+
+                    end if;
+
+                ELSEIF strTipe='out' then
+
+                    IF strTipe2='printing' then
+
+                        UPDATE tbltrans set print_outkg=print_outkg - qty1, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    elseIF strTipe2='cutting' then
+
+                        UPDATE tbltrans set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    elseIF strTipe2='sell' then
+
+                        UPDATE tbltrans set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-packid where itemid=pitemid1 and periode=tgl1;
+
+                    elseIF strTipe2='adj' then
+
+                        UPDATE tbltrans set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						IF strTipe2='sell' then
+
+							call updatesaldoawaltbltrans(tgl1,pitemid1,packid,qty1,0);
+
+						else
+
+                        	call updatesaldoawaltbltrans(tgl1,pitemid1,1,qty1,0);
+
+						end if;
+
+                    end if;
+
+                end if;
+
+            end if;
+
+        end if;
+
+        /*item baru*/
+
+        if pitemid2<>0 THEN
+
+            select itemid into intItem from tbltrans where itemid = pitemid2 and periode=tgl2;
+
+            if intitem>0 THEN
+
+                IF strTipe='in' then
+
+                    if strtipe2='buy' then
+
+                        UPDATE tbltrans set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+packid where itemid=pitemid2 and periode=tgl2;
+
+                    elseif strtipe2='blowing' then
+
+                        UPDATE tbltrans set blow_inkg=blow_inkg + qty2, blow_inro=blow_inro+1 where itemid=pitemid2 and periode=tgl2;
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						if strtipe2='buy' then
+
+                        	call updatesaldoawaltbltrans(tgl2,pitemid2,packid,qty2,0);
+
+						else
+
+							call updatesaldoawaltbltrans(tgl2,pitemid2,1,qty2,0);
+
+						end if;
+
+                    end if;
+
+                ELSEIF strTipe='out' then
+
+                    IF strTipe2='printing' then
+
+                        UPDATE tbltrans set print_outkg=print_outkg + qty2, print_outro=print_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                    elseIF strTipe2='cutting' then
+
+                        UPDATE tbltrans set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                    elseIF strTipe2='sell' then
+
+                        UPDATE tbltrans set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+packid where itemid=pitemid2 and periode=tgl2;
+
+                    elseIF strTipe2='adj' then
+
+                        UPDATE tbltrans set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						IF strTipe2='sell' then
+
+                        	call updatesaldoawaltbltrans(tgl2,pitemid2,-packid,-qty2,0);
+
+						else
+
+							call updatesaldoawaltbltrans(tgl2,pitemid2,-1,-qty2,0);
+
+						end if;
+
+                    end if;
+
+                end if;
+
+            ELSE
+
+                IF strTipe='in' then
+
+                    IF strTipe2='buy' then
+
+                        insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,packid,qty2,0,0,0,0,0,0,0,0,0,0);
+
+                    elseIF strTipe2='blowing' then
+
+                        insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						IF strTipe2='buy' then
+
+							call updatesaldoawaltbltrans(tgl2,pitemid2,packid,qty2,1);
+
+						else
+
+                        	call updatesaldoawaltbltrans(tgl2,pitemid2,1,qty2,1);
+
+						end if;
+
+                    end if;
+
+                ELSEIF strTipe='out' then
+
+                    IF strTipe2='printing' then
+
+                        insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+
+                    elseIF strTipe2='cutting' then
+
+                        insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+
+                    elseIF strTipe2='sell' then
+
+                        insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,0,0,0,0,0,0,packid,qty2,0,0);
+
+                    elseIF strTipe2='adj' then
+
+                        insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);
+
+                    end if;
+
+                    if intskip=0 THEN
+
+						IF strTipe2='sell' then
+
+							call updatesaldoawaltbltrans(tgl2,pitemid2,-packid,-qty2,1);
+
+						else
+
+                        	call updatesaldoawaltbltrans(tgl2,pitemid2,-1,-qty2,1);
+
+						end if;
+
+                    end if;
+
+                end if;
+
+            end if;
+
+        end if;
+
+    end if;
+
+ELSE
+
+    /* tgl1 <> tgl2 */
+
+    if tgl1>='2025-08-31' and pitemid1<>0 then
+
+        select itemid into intItem from tbltrans where itemid = pitemid1 and periode=tgl1;
+
+        if intitem>0 THEN
+
+            IF strTipe='in' then
+
+                if strtipe2='buy' then
+
+                    UPDATE tbltrans set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-packid where itemid=pitemid1 and periode=tgl1;
+
+                elseif strtipe2='blowing' then
+
+                    UPDATE tbltrans set blow_inkg=blow_inkg - qty1, blow_inro=blow_inro-1 where itemid=pitemid1 and periode=tgl1;
+
+                end if;
+
+                if intskip=0 THEN
+
+					if strtipe2='buy' then
+
+						call updatesaldoawaltbltrans(tgl1,pitemid1,-packid,-qty1,0);
+
+					else
+
+                    	call updatesaldoawaltbltrans(tgl1,pitemid1,-1,-qty1,0);
+
+					end if;
+
+                end if;
+
+            ELSEIF strTipe='out' then
+
+                IF strTipe2='printing' then
+
+                    UPDATE tbltrans set print_outkg=print_outkg - qty1, print_outro=print_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                elseIF strTipe2='cutting' then
+
+                    UPDATE tbltrans set cut_outkg=cut_outkg - qty1, cut_outro=cut_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                elseIF strTipe2='sell' then
+
+                    UPDATE tbltrans set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-packid where itemid=pitemid1 and periode=tgl1;
+
+                elseIF strTipe2='adj' then
+
+                    UPDATE tbltrans set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-1 where itemid=pitemid1 and periode=tgl1;
+
+                end if;
+
+                if intskip=0 THEN
+
+					IF strTipe2='sell' then
+
+						call updatesaldoawaltbltrans(tgl1,pitemid1,packid,qty1,0);
+
+					else
+
+                    	call updatesaldoawaltbltrans(tgl1,pitemid1,1,qty1,0);
+
+					end if;
+
+                end if;
+
+            end if;
+
+        end if;
+
+    end if;
+
+    if tgl2>='2025-08-31' and pitemid2<>0 then
+
+        select itemid into intItem2 from tbltrans where itemid = pitemid2 and periode=tgl2;
+
+        if intitem2>0 THEN
+
+            IF strTipe='in' then
+
+                if strtipe2='buy' then
+
+                    UPDATE tbltrans set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+packid where itemid=pitemid2 and periode=tgl2;
+
+                elseif strtipe2='blowing' then
+
+                    UPDATE tbltrans set blow_inkg=blow_inkg + qty2, blow_inro=blow_inro+1 where itemid=pitemid2 and periode=tgl2;
+
+                end if;
+
+                if intskip=0 THEN
+
+					if strtipe2='buy' then
+
+						call updatesaldoawaltbltrans(tgl2,pitemid2,packid,qty2,0);
+
+					else
+
+                    	call updatesaldoawaltbltrans(tgl2,pitemid2,1,qty2,0);
+
+					end if;
+
+                end if;
+
+            ELSEIF strTipe='out' then
+
+                IF strTipe2='printing' then
+
+                    UPDATE tbltrans set print_outkg=print_outkg + qty2, print_outro=print_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='cutting' then
+
+                    UPDATE tbltrans set cut_outkg=cut_outkg + qty2, cut_outro=cut_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='sell' then
+
+                    UPDATE tbltrans set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+packid where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='adj' then
+
+                    UPDATE tbltrans set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+1 where itemid=pitemid2 and periode=tgl2;
+
+                end if;
+
+                if intskip=0 THEN
+
+					IF strTipe2='sell' then
+
+						call updatesaldoawaltbltrans(tgl2,pitemid2,-packid,-qty2,0);
+
+					else
+
+                    	call updatesaldoawaltbltrans(tgl2,pitemid2,-1,-qty2,0);
+
+					end if;
+
+                end if;
+
+            end if;
+
+        ELSE
+
+            IF strTipe='in' then
+
+                IF strTipe2='buy' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,packid,qty2,0,0,0,0,0,0,0,0,0,0);
+
+                elseIF strTipe2='blowing' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,1,qty2,0,0,0,0,0,0,0,0);
+
+                end if;
+
+                if intskip=0 THEN
+
+					IF strTipe2='buy' then
+
+						call updatesaldoawaltbltrans(tgl2,pitemid2,packid,qty2,1);
+
+					else
+
+                    	call updatesaldoawaltbltrans(tgl2,pitemid2,1,qty2,1);
+
+					end if;
+
+                end if;
+
+            ELSEIF strTipe='out' then
+
+                IF strTipe2='printing' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,0,0,1,qty2,0,0,0,0,0,0);
+
+                elseIF strTipe2='cutting' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,0,0,0,0,1,qty2,0,0,0,0);
+
+                elseIF strTipe2='sell' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,0,0,0,0,0,0,packid,qty2,0,0);
+
+                elseIF strTipe2='adj' then
+
+                    insert into tbltrans values(tgl2,now(),strUser,pitemid2,0,0,0,0,0,0,0,0,0,0,0,0,0,1,qty2);
+
+                end if;
+
+                if intskip=0 THEN
+
+					IF strTipe2='sell' then
+
+						call updatesaldoawaltbltrans(tgl2,pitemid2,-packid,-qty2,1);
+
+					else
+
+                    	call updatesaldoawaltbltrans(tgl2,pitemid2,-1,-qty2,1);
+
+					end if;
+
+                end if;
+
+            end if;
+
+        end if;
+
+    end if;
+
+end if;
+
+END
