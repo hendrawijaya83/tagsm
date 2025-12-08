@@ -1,0 +1,80 @@
+sp: BEGIN
+
+declare strtipe varchar(20) default '';
+
+declare strnotag varchar(20) default '';
+
+if ptipe='blowing' THEN
+        if pnoplan=0 THEN
+            set strtipe='buy';   
+        else
+            set strtipe=ptipe;  
+        end if;
+	if padddelete='add' THEN
+
+        select notag into strnotag from tbltransnotag2 where notag=pnotag and notrans=pnotrans and tipetrans=strtipe
+        and tgltrans=ptgl;
+        if strnotag='' THEN
+            insert into tbltransnotag2 (tgltrans,notag,itemid,berat,adddate,addby,editdate,editby,kodemesin,shiftid,operator,qc,notrans,tipetrans) 
+            values (ptgl,pnotag,pitemid,pberat,padddate,paddby,padddate,paddby,pkodemesin,pshiftid,poperator,pqc,pnotrans,strtipe);
+        ELSE
+            update tbltransnotag2 set itemid=pitemid,shiftid=pshiftid,berat=pberat,editdate=padddate,editby=paddby,
+            kodemesin=pkodemesin,operator=poperator,qc=pqc
+            where notag=pnotag and notrans=pnotrans and tipetrans=strtipe and tgltrans=ptgl;
+        end if;
+	ELSE
+        /*delete from tbltransnotag2 where notag=pnotag and notrans=pnotrans and tipetrans=strtipe and tgltrans=ptgl;*/
+        update tbltransnotag2 set berat=0 , editdate=padddate, editby=paddby where notag=pnotag and notrans=pnotrans and tipetrans=strtipe and tgltrans=ptgl;
+    end if;
+elseif ptipe='printing' THEN
+        if pnoplan=0 THEN
+            set strtipe='buy';   
+        else
+            set strtipe=ptipe;  
+        end if;
+	if padddelete='add' THEN
+
+        select notag into strnotag from tbltransnotag2 where notag=pnotag and notrans=pnotrans and tipetrans=strtipe
+        and tgltrans=ptgl;
+
+        if strnotag='' THEN
+            insert into tbltransnotag2 (tgltrans,notag,itemid,berat,adddate,addby,editdate,editby,kodemesin,shiftid,operator,qc,notrans,tipetrans) 
+            values (ptgl,pnotag,pitemid,pberat,padddate,paddby,padddate,paddby,pkodemesin,pshiftid,poperator,pqc,pnotrans,strtipe);
+        ELSE
+            update tbltransnotag2 set itemid=pitemid,shiftid=pshiftid,berat=pberat,editdate=padddate,editby=paddby,
+            kodemesin=pkodemesin,operator=poperator,qc=pqc
+            where notag=pnotag and notrans=pnotrans and tipetrans=strtipe and tgltrans=ptgl;
+        end if;
+        update tbltransnotag2 set notrans2=pnotrans,notag2=pnotag,tgltrans2=ptgl, editdate=padddate, editby=paddby
+         where notag=pnotagref and notrans=pnotransref 
+        and (tipetrans='blowing' or tipetrans='buy') and tgltrans=ptglref;
+	ELSE        
+    	update tbltransnotag2 set notrans2='',notag2='', editdate=padddate, editby=paddby 
+        where notag2=pnotag and notag=pnotagref and (tipetrans='blowing' or tipetrans='buy') 
+        and notrans=pnotransref and tgltrans=ptglref;
+        update tbltransnotag2 set berat=0 , editdate=padddate, editby=paddby where notag=pnotag and notrans=pnotrans and tipetrans=strtipe and tgltrans=ptgl;
+    end if;
+elseif ptipe='cutting' THEN
+    set strtipe=ptipe;  
+	if padddelete='add' THEN
+        if pnoplan=0 THEN
+            update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby
+            where notag=pnotagref and notrans=pnotransref and (tipetrans='blowing' or tipetrans='buy') and tgltrans=ptglref;
+        else
+            update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby 
+            where notag=pnotagref and notrans=pnotransref and (tipetrans='printing' or tipetrans='buy')  and tgltrans=ptglref;
+        end if;
+	ELSE
+        if pnoplan=0 THEN
+            update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby 
+            where notag2=pnotag and notag=pnotagref and (tipetrans='blowing' or tipetrans='buy') 
+            and notrans=pnotransref and tgltrans=ptglref;
+        else
+            update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby 
+            where notag2=pnotag and notag=pnotagref and (tipetrans='printing' or tipetrans='buy')
+            and notrans=pnotransref and tgltrans=ptglref;
+        end if;
+    end if;
+end if;
+
+END
