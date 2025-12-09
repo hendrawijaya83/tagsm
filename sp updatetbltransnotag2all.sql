@@ -9,7 +9,7 @@ DECLARE m Int DEFAULT 0;
 DECLARE j Int DEFAULT 0;
 
 declare litemid2 int DEFAULT 0;
-
+declare dateTag date;
 declare dateTag2 date;
 declare dateadddate date;
 
@@ -25,13 +25,14 @@ declare strqc varchar(100) default '';
 declare strmesin varchar(20) default '';
 declare lnoplan int default 0;
 declare lshiftid int default 0;
+declare strnotrans2 varchar(20) DEFAULT '';
+declare strnotag2 varchar(20) default '';
 
 delete from tbltransnotag2;
 
 SELECT COUNT(notag) into n FROM tbllaptag where adddate2>='2025-08-31' and berat<>0;
 
 SET i=0;
-
 WHILE i<n DO       
 
         SELECT notag,tgllap,addby,berat,notrans,itemid,adddate,operator,qc,kodemesin,noplan,shiftid
@@ -40,49 +41,35 @@ WHILE i<n DO
         where adddate2>='2025-08-31' and berat<>0 LIMIT i,1;
 
         if strnotag<>'' then
-            call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'blowing','','',dateTag2,
+            if lnoplan=0 then
+                call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'buy','','',dateTag2,
             dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid); 
+            else
+                call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'blowing','','',dateTag2,
+            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid); 
+            end if;
         end if;      
-
     SET i = i + 1;
-
 END WHILE;
 
-
-select count(y.notag) into n from tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.adddate2>='2025-08-31' 
-
-and x.berat<>0;
+select count(x.notag) into n from tbllaptagp x inner join tbllaptag y on x.notagblowing=y.notag where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31' 
+and x.berat<>0 and y.berat<>0 ;
 
 SET i=0;
-
 WHILE i<n DO 
+        SELECT x.notag,x.tgllap,x.addby,x.berat,x.notrans,x.itemid,x.adddate,x.operator,x.qc,x.kodemesin,y.noplan,x.shiftid,y.notag,y.notrans,y.tgllap 
+        into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,strnotrans2,datetag2
+        FROM tbllaptagp x inner join tbllaptag y on x.notagblowing=y.notag where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31'
+        and x.berat<>0 and y.berat<>0 LIMIT i,1;
 
-        SELECT y.notag,x.adddate2,x.addby,'out',y.berat,0,y.itemid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,litemidreal 
-
-        FROM tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.adddate2>='2025-08-31' and x.berat<>0 LIMIT i,1;
-
-        set litemid1='';
-
-        set dateTag1=dateTag2;
-
-        set decQty1=decQty2;
-
-        if litemid2<>'' then
-
-            call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'printing'); 
-
-            call UpdateSaldoAwalTblTransAllnotag(litemid2,1,dateTag1);   
-
-            update tbltransnotag set itemid2=litemidreal where itemid=litemid2 and periode=dateTag2;
-
+        if strnotag<>'' then
+            call updatetbltransnotag2 (dateTag,strnotag,strnotrans,'printing',strnotag2,strnotrans2,dateTag2,
+            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid); 
         end if;    
-
     SET i = i + 1;
-
 END WHILE;
 
-
-
+/*sampai sini dulu y*/
 select COUNT(notag) into n from tbltagjb where (tipejb='belib' or tipejb='jualb') and berat<>0;
 
 SET i=0;
@@ -294,6 +281,7 @@ WHILE i<n DO
     SET i = i + 1;
 
 END WHILE;
+
 
 
 
