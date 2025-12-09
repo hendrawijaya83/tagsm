@@ -49,7 +49,6 @@ WHILE i<n DO
 END WHILE;
 
 
-
 select count(y.notag) into n from tbltagp x inner join tbltag y on x.notagblowing=y.notag where x.adddate2>='2025-08-31' 
 
 and x.berat<>0;
