@@ -30,7 +30,7 @@ declare strnotag2 varchar(20) default '';
 
 delete from tbltransnotag2;
 
-SELECT COUNT(notag) into n FROM tbllaptag where adddate2>='2025-08-31' and berat<>0;
+SELECT COUNT(notag) into n FROM tbllaptag where tgllap>='2025-08-31' and berat<>0;
 
 SET i=0;
 WHILE i<n DO       
@@ -38,7 +38,7 @@ WHILE i<n DO
         SELECT notag,tgllap,addby,berat,notrans,itemid,adddate,operator,qc,kodemesin,noplan,shiftid
         into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin
         ,lnoplan,lshiftid FROM tbllaptag 
-        where adddate2>='2025-08-31' and berat<>0 LIMIT i,1;
+        where tgllap>='2025-08-31' and berat<>0 LIMIT i,1;
 
         if strnotag<>'' then
             if lnoplan=0 then
@@ -286,3 +286,4 @@ END WHILE;
 
 
 End
+
