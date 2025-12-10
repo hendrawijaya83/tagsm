@@ -43,13 +43,30 @@ WHILE i<n DO
 
         if strnotag<>'' then
             if lnoplan=0 then
-                call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'buy','','',dateTag2,
+                call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'blowing','','',dateTag2,
             dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
             else
                 call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'blowing','','',dateTag2,
             dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
             end if;
         end if;      
+    SET i = i + 1;
+END WHILE;
+
+select COUNT(notrans) into n from tbltagjb where (tipejb='belib' or tipejb='belip' or tipejb='belic') and berat<>0;
+SET i=0;
+WHILE i<n DO 
+
+        SELECT notag,tgljb,editby,berat,notrans,itemid,editdate,'','',kodemesin,0,1,tipejb
+        into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin
+        ,lnoplan,lshiftid,strtipe
+        FROM tbltagjb 
+        where (tipejb='belib' or tipejb='belip' or tipejb='belic') and berat<>0 LIMIT i,1;
+
+        if strnotag<>'' then
+                call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,strtipe,'','',dateTag2,
+            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
+        end if;
     SET i = i + 1;
 END WHILE;
 
@@ -71,223 +88,45 @@ WHILE i<n DO
     SET i = i + 1;
 END WHILE;
 
+select COUNT(notrans) into n from tbltagjb where (tipejb='jualb' or tipejb='jualp' or tipejb='jualc') and berat<>0;
+SET i=0;
+WHILE i<n DO 
+
+        SELECT notag,tgljb,editby,berat,notrans,itemid,editdate,'','',kodemesin,0,1,tipejb
+        into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin
+        ,lnoplan,lshiftid,strtipe
+        FROM tbltagjb 
+        where (tipejb='jualb' or tipejb='jualp' or tipejb='jualc') and berat<>0 LIMIT i,1;
+
+        if strnotag<>'' then
+                call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,strtipe,'','',dateTag2,
+            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
+        end if;
+    SET i = i + 1;
+END WHILE;
+
 /*sampai sini dulu y*/
-select COUNT(notag) into n from tbltagjb where (tipejb='belib' or tipejb='jualb') and berat<>0;
-
-SET i=0;
-
-WHILE i<n DO 
-
-        SELECT notag,tgljb,addby,tipejb,berat,packid,itemid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,litemidreal FROM tbltagjb 
-
-        where (tipejb='belib' or tipejb='jualb') and berat<>0 LIMIT i,1;
-
-        set litemid1='';
-
-        set dateTag1=dateTag2;
-
-        set decQty1=decQty2;
-
-        if litemid2<>'' then
-
-            if strTipe='belib' then
-
-                    call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'in',lpackid,strUser,1,'buy'); 
-
-            elseif strTipe='jualb' then
-
-                    call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'out',lpackid,strUser,1,'sell'); 
-
-            end if;
-
-        call UpdateSaldoAwalTblTransAllnotag(litemid2,1,dateTag1);  
-
-        update tbltransnotag set itemid2=litemidreal where itemid=litemid2 and periode=dateTag2; 
-
-        end if;
-
-    SET i = i + 1;
-
-END WHILE;
-
-
-
 SELECT COUNT(c.notagblowing) into n from tbltagc c where c.berat<>0 and c.notagblowing<>'' and c.adddate2>='2025-08-31';
-
 SET i=0;
 
 WHILE i<n DO 
 
-        SELECT c.notagblowing,c.adddate2,c.addby,'out',c.berat,0,c.itemid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,litemidreal FROM 
+        SELECT notag,adddate2,editby,berat,notrans,itemid,editdate,'','',kodemesin,0,1,'cutting',notagblowing
+        into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,
+        ,lnoplan,lshiftid,strtipe
+        FROM tbltagc
+        where notagblowing<>'' and berat<>0 and adddate2>='2025-08-31' LIMIT i,1;
 
-         tbltagc c where c.berat<>0 and c.notagblowing<>'' and c.adddate2>='2025-08-31' LIMIT i,1;
-
-        set litemid1='';
-
-        set dateTag1=dateTag2;
-
-        set decQty1=decQty2;
-
-        if litemid2<>'' then
-
-            call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'cutting');      
-
-            call UpdateSaldoAwalTblTransAllnotag(litemid2,1,dateTag1);  
-
-            update tbltransnotag set itemid2=litemidreal where itemid=litemid2 and periode=dateTag2;     
-
+        if strnotrans<>'' then
+                call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,strtipe,'','',dateTag2,
+            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
         end if;
-
-    
-
     SET i = i + 1;
 
 END WHILE;
-
-
-
-SELECT COUNT(notag) into n FROM tblimport where tgltag>='2025-08-31' and berat<>0;
-
-SET i=0;
-
-WHILE i<n DO 
-
-        SELECT notag,tgltag,addby,'in',berat,0,itemid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,litemidreal FROM tblimport 
-
-        where tgltag>='2025-08-31' and berat<>0 LIMIT i,1;
-
-        set litemid1='';
-
-        set dateTag1=dateTag2;
-
-        set decQty1=decQty2;
-
-        if litemid2<>'' then
-
-            call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'buy'); 
-
-            call UpdateSaldoAwalTblTransAllnotag(litemid2,1,dateTag1); 
-
-            update tbltransnotag set itemid2=litemidreal where itemid=litemid2 and periode=dateTag2; 
-
-        end if;
-
-      
-
-    SET i = i + 1;
-
-END WHILE;
-
-
-
-select count(i.notag) into n from tbltagp x inner join tblimport i on x.notagblowing=i.notag where x.adddate2>='2025-08-31' 
-
-and i.tgltag>='2025-08-31' and x.berat<>0;
-
-SET i=0;
-
-WHILE i<n DO 
-
-        SELECT i.notag,x.adddate2,x.addby,'out',i.berat,0,i.itemid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,litemidreal 
-
-        FROM tbltagp x inner join tblimport i on x.notagblowing=i.notag where x.adddate2>='2025-08-31' and i.tgltag>='2025-08-31' and x.berat<>0 LIMIT i,1;
-
-        set litemid1='';
-
-        set dateTag1=dateTag2;
-
-        set decQty1=decQty2;
-
-        if litemid2<>'' then
-
-            call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'printing'); 
-
-            call UpdateSaldoAwalTblTransAllnotag(litemid2,1,dateTag1);  
-
-            update tbltransnotag set itemid2=litemidreal where itemid=litemid2 and periode=dateTag2;
-
-        end if;
-
-     
-
-    SET i = i + 1;
-
-END WHILE;
-
-
-
-SELECT COUNT(notag) into n FROM tbltagadj where tgladj>='2025-08-31' and berat<>0 and tipeadj='blowing';
-
-SET i=0;
-
-WHILE i<n DO 
-
-        SELECT notag,tgltag,addby,'out',berat,0,itemid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,litemidreal FROM tbltagadj 
-
-        where tgladj>='2025-08-31' and berat<>0 and tipeadj='blowing' LIMIT i,1;
-
-        set litemid1='';
-
-        set dateTag1=dateTag2;
-
-        set decQty1=decQty2;
-
-        if litemid2<>'' then
-
-            call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'adj'); 
-
-            call UpdateSaldoAwalTblTransAllnotag(litemid2,1,dateTag1);  
-
-            update tbltransnotag set itemid2=litemidreal where itemid=litemid2 and periode=dateTag2; 
-
-        end if;
-
-    
-
-    SET i = i + 1;
-
-END WHILE;
-
-
-
-select count(i.notag) into n from tbltagp x inner join (select notag,itemid,sum(berat) as berat from tbltagadj where tgladj>='2025-08-31' and tipeadj='blowing'
-
- group by notag,itemid) i on x.notagblowing=i.notag where x.adddate2>='2025-08-31' and x.berat<>0 ;
-
-SET i=0;
-
-WHILE i<n DO 
-
-        SELECT i.notag,x.adddate2,x.addby,'out',i.berat,0,i.itemid into litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,litemidreal 
-
-        FROM tbltagp x inner join (select notag,itemid,sum(berat) as berat from tbltagadj where tgladj>='2025-08-31' and tipeadj='blowing'
-
- group by notag,itemid) i on x.notagblowing=i.notag where x.adddate2>='2025-08-31' and x.berat<>0 LIMIT i,1;
-
-        set litemid1='';
-
-        set dateTag1=dateTag2;
-
-        set decQty1=decQty2;
-
-        if litemid2<>'' then
-
-            call recalculateTblTransnotag (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'printing'); 
-
-            call UpdateSaldoAwalTblTransAllnotag(litemid2,1,dateTag1); 
-
-            update tbltransnotag set itemid2=litemidreal where itemid=litemid2 and periode=dateTag2;
-
-        end if;      
-
-    SET i = i + 1;
-
-END WHILE;
-
-
-
 
 End
+
 
 
 
