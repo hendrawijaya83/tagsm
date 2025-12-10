@@ -24,6 +24,7 @@ declare strop varchar(100) default '';
 declare strqc varchar(100) default '';
 declare strmesin varchar(20) default '';
 declare lnoplan int default 0;
+declare lnoplan2 int default 0;
 declare lshiftid int default 0;
 declare strnotrans2 varchar(20) DEFAULT '';
 declare strnotag2 varchar(20) default '';
@@ -43,10 +44,10 @@ WHILE i<n DO
         if strnotag<>'' then
             if lnoplan=0 then
                 call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'buy','','',dateTag2,
-            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid); 
+            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
             else
                 call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'blowing','','',dateTag2,
-            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid); 
+            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
             end if;
         end if;      
     SET i = i + 1;
@@ -58,15 +59,15 @@ and x.berat<>0 and y.berat<>0 ;
 
 SET i=0;
 WHILE i<n DO 
-        SELECT x.notag,x.tgllap,x.addby,x.berat,x.notrans,x.itemid,x.adddate,x.operator,x.qc,x.kodemesin,y.noplan,x.shiftid,y.notag,y.notrans,y.tgllap 
-        into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,strnotrans2,datetag2
-        FROM tbllaptagp x join tbltagp xp on x.notag=xp.notag inner join tbllaptag y on xp.notagblowing=y.notag 
+        SELECT x.notag,x.tgllap,x.addby,x.berat,x.notrans,x.itemid,x.adddate,x.operator,x.qc,x.kodemesin,x.noplan,x.shiftid,y.notag,y.notrans,y.tgllap,y.noplan 
+        into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,strnotrans2,datetag2,lnoplan2
+        FROM tbllaptagp x join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
         where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31'
         and x.berat<>0 and y.berat<>0 LIMIT i,1;
 
         if strnotag<>'' then
             call updatetbltransnotag2 (dateTag,strnotag,strnotrans,'printing',strnotag2,strnotrans2,dateTag2,
-            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid); 
+            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan2); 
         end if;    
     SET i = i + 1;
 END WHILE;
@@ -288,5 +289,6 @@ END WHILE;
 
 
 End
+
 
 
