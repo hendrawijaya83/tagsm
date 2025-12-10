@@ -53,17 +53,16 @@ WHILE i<n DO
     SET i = i + 1;
 END WHILE;
 
-select count(x.notag) into n from tbllaptagp x join tbltagp xp on x.notag=xp.notag inner join tbllaptag y on xp.notagblowing=y.notag 
-        where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31' 
-and x.berat<>0 and y.berat<>0 ;
+select count(xp.notag) into n from tbllaptagp x right join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
+        where xp.adddate2>='2025-08-31' and y.tgllap>='2025-08-31' and xp.berat<>0 and y.berat<>0 ;
 
 SET i=0;
 WHILE i<n DO 
-        SELECT x.notag,x.tgllap,x.addby,x.berat,x.notrans,x.itemid,x.adddate,x.operator,x.qc,x.kodemesin,x.noplan,x.shiftid,y.notag,y.notrans,y.tgllap,y.noplan 
+        SELECT xp.notag,xp.adddate2,xp.addby,xp.berat,xp.notrans,xp.itemid,xp.adddate,x.operator,x.qc,xp.kodemesin,xp.noplan,xp.shiftid,y.notag,y.notrans,y.tgllap,y.noplan 
         into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,strnotrans2,datetag2,lnoplan2
-        FROM tbllaptagp x join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
-        where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31'
-        and x.berat<>0 and y.berat<>0 LIMIT i,1;
+        FROM tbllaptagp x right join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
+        where xp.adddate2>='2025-08-31' and y.tgllap>='2025-08-31'
+        and xp.berat<>0 and y.berat<>0 LIMIT i,1;
 
         if strnotag<>'' then
             call updatetbltransnotag2 (dateTag,strnotag,strnotrans,'printing',strnotag2,strnotrans2,dateTag2,
@@ -289,6 +288,7 @@ END WHILE;
 
 
 End
+
 
 
 
