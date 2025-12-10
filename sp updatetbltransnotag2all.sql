@@ -52,14 +52,16 @@ WHILE i<n DO
     SET i = i + 1;
 END WHILE;
 
-select count(x.notag) into n from tbllaptagp x inner join tbllaptag y on x.notagblowing=y.notag where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31' 
+select count(x.notag) into n from tbllaptagp x join tbltagp xp on x.notag=xp.notag inner join tbllaptag y on xp.notagblowing=y.notag 
+        where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31' 
 and x.berat<>0 and y.berat<>0 ;
 
 SET i=0;
 WHILE i<n DO 
         SELECT x.notag,x.tgllap,x.addby,x.berat,x.notrans,x.itemid,x.adddate,x.operator,x.qc,x.kodemesin,y.noplan,x.shiftid,y.notag,y.notrans,y.tgllap 
         into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,strnotrans2,datetag2
-        FROM tbllaptagp x inner join tbllaptag y on x.notagblowing=y.notag where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31'
+        FROM tbllaptagp x join tbltagp xp on x.notag=xp.notag inner join tbllaptag y on xp.notagblowing=y.notag 
+        where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31'
         and x.berat<>0 and y.berat<>0 LIMIT i,1;
 
         if strnotag<>'' then
@@ -286,4 +288,5 @@ END WHILE;
 
 
 End
+
 
