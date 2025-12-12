@@ -89,7 +89,7 @@ WHILE i<n DO
     SET i = i + 1;
 END WHILE;
 
-SELECT COUNT(c.notagblowing) into n from tbltagc c join tbllaptag b on b.notag=c.notagblowing and c.notagblowing<>'' 
+SELECT COUNT(c.notrans) into n from tbltagc c join tbllaptag b on b.notag=c.notagblowing and c.notagblowing<>'' 
         where c.berat<>0 and b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' ;
 SET i=0;
 
@@ -97,7 +97,7 @@ WHILE i<n DO
 
         SELECT c.notag,c.adddate2,c.editby,b.berat,c.notrans,b.itemid,c.editdate,'','','',0,1,'cutting',b.notag,b.notrans,b.tgllap
         into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,
-        ,lnoplan,lshiftid,strtipe,strnotag2,strnotrans2,datetag2
+        lnoplan,lshiftid,strtipe,strnotag2,strnotrans2,datetag2
         FROM tbltagc c join tbllaptag b on b.notag=c.notagblowing and c.notagblowing<>'' 
         where c.berat<>0 and b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' limit i,1 ;
 
@@ -109,7 +109,7 @@ WHILE i<n DO
 
 END WHILE;
 
-SELECT COUNT(c.notagprinting) into n from tbltagc c join tbllaptagp b on b.notag=c.notagprinting and c.notagprinting<>'' 
+SELECT COUNT(c.notrans) into n from tbltagc c join tbllaptagp b on b.notag=c.notagprinting and c.notagprinting<>'' 
         where c.berat<>0 and b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' ;
 SET i=0;
 
@@ -117,7 +117,7 @@ WHILE i<n DO
 
         SELECT c.notag,c.adddate2,c.editby,b.berat,c.notrans,b.itemid,c.editdate,'','','',1,1,'cutting',b.notag,b.notrans,b.tgllap
         into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,
-        ,lnoplan,lshiftid,strtipe,strnotag2,strnotrans2,datetag2
+        lnoplan,lshiftid,strtipe,strnotag2,strnotrans2,datetag2
         FROM tbltagc c join tbllaptagp b on b.notag=c.notagprinting and c.notagprinting<>'' 
         where c.berat<>0 and b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' limit i,1 ;
 
@@ -148,6 +148,7 @@ WHILE i<n DO
 END WHILE;
 
 End
+
 
 
 
