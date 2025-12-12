@@ -31,22 +31,22 @@ declare strnotag2 varchar(20) default '';
 
 delete from tbltransnotag2;
 
-SELECT COUNT(notag) into n FROM tbllaptag where tgllap>='2025-08-31' and berat<>0;
+SELECT COUNT(y.notag) into n FROM tbllaptag x join tbltag y on x.notag=y.notag where x.tgllap>='2025-08-31' and y.berat<>0;
 
 SET i=0;
 WHILE i<n DO       
 
-        SELECT notag,tgllap,addby,berat,notrans,itemid,adddate,operator,qc,kodemesin,noplan,shiftid
-        into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin
-        ,lnoplan,lshiftid FROM tbllaptag 
-        where tgllap>='2025-08-31' and berat<>0 LIMIT i,1;
+        SELECT y.notag,x.tgllap,y.addby,y.berat,x.notrans,y.itemid,y.adddate,x.operator,x.qc,y.kodemesin,y.noplan,y.shiftid
+        into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin
+        ,lnoplan,lshiftid FROM tbllaptag x join tbltag y on x.notag=y.notag
+        where x.tgllap>='2025-08-31' and y.berat<>0 LIMIT i,1;
 
         if strnotag<>'' then
             if lnoplan=0 then
-                call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'blowing','','',dateTag2,
+                call updatetbltransnotag2 (dateTag,strnotag,strnotrans,'blowing','','',dateTag,
             dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
             else
-                call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,'blowing','','',dateTag2,
+                call updatetbltransnotag2 (dateTag,strnotag,strnotrans,'blowing','','',dateTag,
             dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
             end if;
         end if;      
@@ -148,6 +148,7 @@ WHILE i<n DO
 END WHILE;
 
 End
+
 
 
 
