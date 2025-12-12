@@ -71,15 +71,15 @@ WHILE i<n DO
 END WHILE;
 
 select count(xp.notag) into n from tbllaptagp x right join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
-        where xp.adddate2>='2025-08-31' and y.tgllap>='2025-08-31' and xp.berat<>0 and y.berat<>0 ;
+        where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31' and xp.berat<>0 and y.berat<>0 ;
 
 SET i=0;
 WHILE i<n DO 
-        SELECT xp.notag,xp.adddate2,xp.addby,xp.berat,xp.notrans,xp.itemid,xp.adddate,x.operator,x.qc,xp.kodemesin,xp.noplan,
+        SELECT xp.notag,x.tgllap,xp.addby,xp.berat,xp.notrans,xp.itemid,xp.adddate,x.operator,x.qc,xp.kodemesin,xp.noplan,
         xp.shiftid,y.notag,y.notrans,y.tgllap,y.noplan 
         into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,strnotrans2,datetag2,lnoplan2
         FROM tbllaptagp x right join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
-        where xp.adddate2>='2025-08-31' and y.tgllap>='2025-08-31'
+        where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31'
         and xp.berat<>0 and y.berat<>0 LIMIT i,1;
 
         if strnotag<>'' then
@@ -148,6 +148,7 @@ WHILE i<n DO
 END WHILE;
 
 End
+
 
 
 
