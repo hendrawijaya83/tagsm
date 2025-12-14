@@ -40,12 +40,12 @@ elseif ptipe='printing' THEN
             kodemesin=pkodemesin,operator=poperator,qc=pqc
             where notag=pnotag and notrans=pnotrans and tipetrans=strtipe and tgltrans=ptgl;
         end if;
-        update tbltransnotag2 set notrans2=pnotrans,notag2=pnotag,tgltrans2=ptgl, editdate=padddate, editby=paddby
-         where notag=pnotagref and notrans=pnotransref 
+        update tbltransnotag2 set notrans2=pnotrans,notag2=pnotag,tgltrans2=ptgl, editdate=padddate, editby=paddby,terpakai=1
+         where notag=pnotagref and notrans=pnotransref and terpakai=0 
         and (tipetrans='blowing') and tgltrans=ptglref;
 	ELSE        
-    	update tbltransnotag2 set notrans2='',notag2='', editdate=padddate, editby=paddby 
-        where notag2=pnotag and notag=pnotagref and (tipetrans='blowing') 
+    	update tbltransnotag2 set notrans2='',notag2='', editdate=padddate, editby=paddby ,terpakai=0
+        where notag2=pnotag and notag=pnotagref and (tipetrans='blowing') and terpakai=1 
         and notrans=pnotransref and tgltrans=ptglref;
 
 		delete from tbltransnotag2 where notag=pnotag and notrans=pnotrans and tipetrans=strtipe and tgltrans=ptgl;
@@ -55,21 +55,21 @@ elseif ptipe='cutting' THEN
     set strtipe=ptipe;  
 	if padddelete='add' THEN
         if pnoplan=0 THEN
-            update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby
-            where notag=pnotagref and notrans=pnotransref and (tipetrans='blowing') and tgltrans=ptglref;
+            update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby,terpakai=1
+            where notag=pnotagref and notrans=pnotransref and (tipetrans='blowing') and tgltrans=ptglref and terpakai=0;
         else
-            update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby 
-            where notag=pnotagref and notrans=pnotransref and (tipetrans='printing')  and tgltrans=ptglref;
+            update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby,terpakai=1 
+            where notag=pnotagref and notrans=pnotransref and (tipetrans='printing')  and tgltrans=ptglref and terpakai=0;
         end if;
 	ELSE
         if pnoplan=0 THEN
-            update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby 
+            update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby, terpakai=0
             where notag2=pnotag and notag=pnotagref and (tipetrans='blowing') 
-            and notrans=pnotransref and tgltrans=ptglref;
+            and notrans=pnotransref and tgltrans=ptglref and terpakai=1;
         else
-            update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby 
+            update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby, terpakai=0 
             where notag2=pnotag and notag=pnotagref and (tipetrans='printing')
-            and notrans=pnotransref and tgltrans=ptglref;
+            and notrans=pnotransref and tgltrans=ptglref and terpakai=1;
         end if;
     end if;
 elseif (ptipe='belib' or ptipe='belip' or ptipe='belic') THEN
@@ -99,34 +99,33 @@ elseif (ptipe='belib' or ptipe='belip' or ptipe='belic') THEN
 elseif ptipe='jualb' THEN
     set strtipe=ptipe;  
 	if padddelete='add' THEN
-        update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby 
-            where notag=pnotagref and notrans=pnotransref and (tipetrans='blowing')  and tgltrans=ptglref;
+        update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby, terpakai=1 
+            where notag=pnotagref and notrans=pnotransref and (tipetrans='blowing')  and tgltrans=ptglref and terpakai=0;
 	ELSE
-        update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby 
+        update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby ,terpakai=0
             where notag2=pnotag and notag=pnotagref and (tipetrans='blowing')
-            and notrans=pnotransref and tgltrans=ptglref;
+            and notrans=pnotransref and tgltrans=ptglref and terpakai=1;
     end if;
 elseif ptipe='jualp' THEN
     set strtipe=ptipe;  
 	if padddelete='add' THEN
-        update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby 
-            where notag=pnotagref and notrans=pnotransref and (tipetrans='printing')  and tgltrans=ptglref;
+        update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby , terpakai=1
+            where notag=pnotagref and notrans=pnotransref and (tipetrans='printing')  and tgltrans=ptglref and terpakai=0;
 	ELSE
-        update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby 
+        update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby,terpakai=0 
             where notag2=pnotag and notag=pnotagref and (tipetrans='printing')
-            and notrans=pnotransref and tgltrans=ptglref;
+            and notrans=pnotransref and tgltrans=ptglref and terpakai=1;
     end if;
 elseif ptipe='jualc' THEN
     set strtipe=ptipe;  
 	if padddelete='add' THEN
-        update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby 
-            where notag=pnotagref and notrans=pnotransref and (tipetrans='cutting')  and tgltrans=ptglref;
+        update tbltransnotag2 set notrans2=pnotrans,tgltrans2=ptgl,notag2=pnotag , editdate=padddate, editby=paddby,terpakai=1
+            where notag=pnotagref and notrans=pnotransref and (tipetrans='cutting')  and tgltrans=ptglref and terpakai=0;
 	ELSE
-        update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby 
+        update tbltransnotag2 set notrans2='' , editdate=padddate, editby=paddby ,terpakai=0
             where notag2=pnotag and notag=pnotagref and (tipetrans='cutting')
-            and notrans=pnotransref and tgltrans=ptglref;
+            and notrans=pnotransref and tgltrans=ptglref and terpakai=1;
     end if;
 end if;
 
 END
-
