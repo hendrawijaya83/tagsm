@@ -133,7 +133,7 @@ select COUNT(jb.notrans) into n from tbltagjb jb join tbltransnotag2 y on jb.not
         where (jb.tipejb='jualb' or jb.tipejb='jualp') and y.berat<>0 and y.notag<>'' ;
 SET i=0;
 WHILE i<n DO 
-        SELECT jb.notag,jb.tgljb,jb.editby,y.berat,jb.notrans,y.itemid,jb.editdate,'','','',0,1,y.notag,
+        SELECT jb.notag,jb.tgljb,jb.editby,y.berat,jb.notrans,y.itemid,jb.editdate,'','','',0,1,'',
         y.notrans,y.tgltrans,0,jb.tipejb 
         into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,
         strnotrans2,datetag2,lnoplan2,strtipe
@@ -148,6 +148,7 @@ WHILE i<n DO
 END WHILE;
 
 End
+
 
 
 
