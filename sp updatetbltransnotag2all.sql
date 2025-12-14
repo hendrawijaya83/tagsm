@@ -11,7 +11,7 @@ DECLARE j Int DEFAULT 0;
 declare litemid2 int DEFAULT 0;
 declare dateTag date;
 declare dateTag2 date;
-declare dateadddate date;
+declare dateadddate datetime;
 
 declare decQty2 decimal(10,2) default 0;
 declare strUser varchar(20);
@@ -148,5 +148,6 @@ WHILE i<n DO
 END WHILE;
 
 End
+
 
 
