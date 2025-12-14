@@ -133,14 +133,14 @@ select COUNT(jb.notrans) into n from tbltagjb jb join tbltransnotag2 y on jb.not
         where (jb.tipejb='jualb' or jb.tipejb='jualp') and y.berat<>0 and y.notag<>'' and jb.berat<>0 ;
 SET i=0;
 WHILE i<n DO 
-        SELECT jb.notag,jb.tgljb,jb.editby,y.berat,jb.notrans,y.itemid,jb.editdate,'','','',0,1,'',
+        SELECT '',jb.tgljb,jb.editby,y.berat,jb.notrans,y.itemid,jb.editdate,'','','',0,1,y.notag,
         y.notrans,y.tgltrans,0,jb.tipejb 
         into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,
         strnotrans2,datetag2,lnoplan2,strtipe
         FROM  tbltagjb jb join tbltransnotag2 y on jb.notag=y.notag and left(y.tipetrans,1)=right(jb.tipejb,1) 
         where (jb.tipejb='jualb' or jb.tipejb='jualp') and y.berat<>0 and y.notag<>'' and jb.berat<>0 limit i,1;
 
-        if strnotag<>'' then
+        if strnotrans<>'' then
                 call updatetbltransnotag2 (dateTag,strnotag,strnotrans,strtipe,strnotag2,strnotrans2,dateTag2,
             dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
         end if;
@@ -148,6 +148,7 @@ WHILE i<n DO
 END WHILE;
 
 End
+
 
 
 
