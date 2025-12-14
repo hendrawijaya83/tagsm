@@ -90,7 +90,7 @@ WHILE i<n DO
 END WHILE;
 
 SELECT COUNT(c.notrans) into n from tbltagc c join tbllaptag b on b.notag=c.notagblowing and c.notagblowing<>'' 
-        where c.berat<>0 and b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' ;
+        where b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' ;
 SET i=0;
 
 WHILE i<n DO 
@@ -110,7 +110,7 @@ WHILE i<n DO
 END WHILE;
 
 SELECT COUNT(c.notrans) into n from tbltagc c join tbllaptagp b on b.notag=c.notagprinting and c.notagprinting<>'' 
-        where c.berat<>0 and b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' ;
+        where b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' ;
 SET i=0;
 
 WHILE i<n DO 
@@ -148,3 +148,4 @@ WHILE i<n DO
 END WHILE;
 
 End
+
