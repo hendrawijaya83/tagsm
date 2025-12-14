@@ -70,7 +70,7 @@ WHILE i<n DO
     SET i = i + 1;
 END WHILE;
 
-select count(xp.notag) into n from tbllaptagp x right join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
+select count(xp.notag) into n from tbllaptagp x join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
         where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31' and xp.berat<>0 and y.berat<>0 ;
 
 SET i=0;
@@ -78,7 +78,7 @@ WHILE i<n DO
         SELECT xp.notag,x.tgllap,xp.addby,xp.berat,xp.notrans,xp.itemid,xp.adddate,x.operator,x.qc,xp.kodemesin,xp.noplan,
         xp.shiftid,y.notag,y.notrans,y.tgllap,y.noplan 
         into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,strnotrans2,datetag2,lnoplan2
-        FROM tbllaptagp x right join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
+        FROM tbllaptagp x join tbltagp xp on x.notag=xp.notag left join tbllaptag y on xp.notagblowing=y.notag 
         where x.tgllap>='2025-08-31' and y.tgllap>='2025-08-31'
         and xp.berat<>0 and y.berat<>0 LIMIT i,1;
 
@@ -99,7 +99,7 @@ WHILE i<n DO
         into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,
         lnoplan,lshiftid,strtipe,strnotag2,strnotrans2,datetag2
         FROM tbltagc c join tbllaptag b on b.notag=c.notagblowing and c.notagblowing<>'' 
-        where c.berat<>0 and b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' limit i,1 ;
+        where b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' limit i,1 ;
 
         if strnotrans<>'' then
                 call updatetbltransnotag2 (dateTag,strnotag,strnotrans,strtipe,strnotag2,strnotrans2,dateTag2,
@@ -119,7 +119,7 @@ WHILE i<n DO
         into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,
         lnoplan,lshiftid,strtipe,strnotag2,strnotrans2,datetag2
         FROM tbltagc c join tbllaptagp b on b.notag=c.notagprinting and c.notagprinting<>'' 
-        where c.berat<>0 and b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' limit i,1 ;
+        where b.berat<>0 and c.adddate2>='2025-08-31' and b.tgllap>='2025-08-31' limit i,1 ;
 
         if strnotrans<>'' then
                 call updatetbltransnotag2 (dateTag,strnotag,strnotrans,strtipe,strnotag2,strnotrans2,dateTag2,
@@ -148,4 +148,5 @@ WHILE i<n DO
 END WHILE;
 
 End
+
 
