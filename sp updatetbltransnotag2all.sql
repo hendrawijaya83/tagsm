@@ -53,7 +53,7 @@ WHILE i<n DO
     SET i = i + 1;
 END WHILE;
 
-select COUNT(notrans) into n from tbltagjb where (tipejb='belib' or tipejb='belip' or tipejb='belic') and berat<>0;
+select COUNT(notrans) into n from tbltagjb where (tipejb='belib' or tipejb='belip') and berat<>0;
 SET i=0;
 WHILE i<n DO 
 
@@ -61,7 +61,7 @@ WHILE i<n DO
         into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin
         ,lnoplan,lshiftid,strtipe
         FROM tbltagjb 
-        where (tipejb='belib' or tipejb='belip' or tipejb='belic') and berat<>0 LIMIT i,1;
+        where (tipejb='belib' or tipejb='belip') and berat<>0 LIMIT i,1;
 
         if strnotag<>'' then
                 call updatetbltransnotag2 (dateTag2,strnotag,strnotrans,strtipe,'','',dateTag2,
@@ -130,7 +130,7 @@ WHILE i<n DO
 END WHILE;
 
 select COUNT(jb.notrans) into n from tbltagjb jb join tbltransnotag2 y on jb.notag=y.notag and left(y.tipetrans,1)=right(jb.tipejb,1)  
-        where (jb.tipejb='jualb' or jb.tipejb='jualp' or jb.tipejb='jualc') and y.berat<>0 and y.notag<>'' ;
+        where (jb.tipejb='jualb' or jb.tipejb='jualp') and y.berat<>0 and y.notag<>'' ;
 SET i=0;
 WHILE i<n DO 
         SELECT jb.notag,jb.tgljb,jb.editby,y.berat,jb.notrans,y.itemid,jb.editdate,'','','',0,1,y.notag,
@@ -138,7 +138,7 @@ WHILE i<n DO
         into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,
         strnotrans2,datetag2,lnoplan2,strtipe
         FROM  tbltagjb jb join tbltransnotag2 y on jb.notag=y.notag and left(y.tipetrans,1)=right(jb.tipejb,1) 
-        where (jb.tipejb='jualb' or jb.tipejb='jualp' or jb.tipejb='jualc') and y.berat<>0 and y.notag<>'' limit i,1;
+        where (jb.tipejb='jualb' or jb.tipejb='jualp') and y.berat<>0 and y.notag<>'' limit i,1;
 
         if strnotag<>'' then
                 call updatetbltransnotag2 (dateTag,strnotag,strnotrans,strtipe,strnotag2,strnotrans2,dateTag2,
@@ -148,6 +148,7 @@ WHILE i<n DO
 END WHILE;
 
 End
+
 
 
 
