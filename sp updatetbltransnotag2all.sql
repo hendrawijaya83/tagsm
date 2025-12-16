@@ -129,25 +129,50 @@ WHILE i<n DO
 
 END WHILE;
 
-select COUNT(jb.notrans) into n from tbltagjb jb join tbltransnotag2 y on jb.notag=y.notag and left(y.tipetrans,1)=right(jb.tipejb,1)  
-        where (jb.tipejb='jualb' or jb.tipejb='jualp') and y.berat<>0 and y.notag<>'' and jb.berat<>0 ;
+SELECT COUNT(c.notrans) into n from tbltagjb c join tbllaptag b on b.notag=c.notag  
+        where b.berat<>0 and c.tgljb>='2025-08-31' and b.tgllap>='2025-08-31' and c.tipejb='jualb' and c.berat<>0 ;
 SET i=0;
-WHILE i<n DO 
-        SELECT '',jb.tgljb,jb.editby,y.berat,jb.notrans,y.itemid,jb.editdate,'','','',0,1,y.notag,
-        y.notrans,y.tgltrans,0,jb.tipejb 
-        into strnotag,dateTag,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,lnoplan,lshiftid,strnotag2,
-        strnotrans2,datetag2,lnoplan2,strtipe
-        FROM  tbltagjb jb join tbltransnotag2 y on jb.notag=y.notag and left(y.tipetrans,1)=right(jb.tipejb,1) 
-        where (jb.tipejb='jualb' or jb.tipejb='jualp') and y.berat<>0 and y.notag<>'' and jb.berat<>0 limit i,1;
 
-        if strnotrans<>'' then
+WHILE i<n DO 
+
+        SELECT c.notag,c.tgljb,c.editby,b.berat,c.notrans,b.itemid,c.editdate,'','',''
+        ,0,1,'jualb',b.notag,b.notrans,b.tgllap
+        into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,
+        lnoplan,lshiftid,strtipe,strnotag2,strnotrans2,datetag2
+        FROM tbltagjb c join tbllaptag b on b.notag=c.notag  
+        where b.berat<>0 and c.tgljb>='2025-08-31' and b.tgllap>='2025-08-31' and c.tipejb='jualb' and c.berat<>0 limit i,1 ;
+
+        if strnotag<>'' then
                 call updatetbltransnotag2 (dateTag,strnotag,strnotrans,strtipe,strnotag2,strnotrans2,dateTag2,
             dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
         end if;
     SET i = i + 1;
+
+END WHILE;
+
+SELECT COUNT(c.notrans) into n from tbltagjb c join tbllaptagp b on b.notag=c.notag  
+        where b.berat<>0 and c.tgljb>='2025-08-31' and b.tgllap>='2025-08-31' and c.tipejb='jualp' and c.berat<>0;
+SET i=0;
+
+WHILE i<n DO 
+
+        SELECT c.notag,c.tgljb,c.editby,b.berat,c.notrans,b.itemid,c.editdate,'','',''
+        ,1,1,'jualp',b.notag,b.notrans,b.tgllap
+        into strnotag,dateTag2,strUser,decQty2,strnotrans,litemid2,dateadddate,strop,strqc,strmesin,
+        lnoplan,lshiftid,strtipe,strnotag2,strnotrans2,datetag2
+        FROM tbltagjb c join tbllaptagp b on b.notag=c.notag  
+        where b.berat<>0 and c.tgljb>='2025-08-31' and b.tgllap>='2025-08-31' and c.tipejb='jualp' and c.berat<>0 limit i,1 ;
+
+        if strnotag<>'' then
+                call updatetbltransnotag2 (dateTag,strnotag,strnotrans,strtipe,strnotag2,strnotrans2,dateTag2,
+            dateadddate,struser,'add',strop,strqc,strmesin,litemid2,decQty2,lnoplan,lshiftid,lnoplan); 
+        end if;
+    SET i = i + 1;
+
 END WHILE;
 
 End
+
 
 
 
