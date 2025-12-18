@@ -1,0 +1,16 @@
+//tgadd
+update tbltag set notag2=new.notag,notrans2=new.notrans,tgltrans2=new.adddate2
+where notag=new.notagblowing and noplan=new.noplanblowing;
+
+//tgdelete
+update tbltag set notag2='',notrans2='' where notag=old.notagblowing 
+    and noplan=old.noplanblowing;
+
+//tgedit
+if new.berat=0 THEN
+	update tbltag set notag2='',notrans2='' where notag=new.notagblowing and noplan=new.noplanblowing;
+ELSE
+	if new.notrans<>'' THEN
+    	update tbltag set notag2=new.notag,notrans2=new.notrans,tgltrans2=new.adddate2 where notag=new.notagblowing and noplan=new.noplanblowing;
+    end if;
+end if;
