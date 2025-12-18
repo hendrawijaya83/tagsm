@@ -1,0 +1,1 @@
+update tbltag set notag2=new.notag,notrans2=new.notrans,tgltrans2=new.adddate2 where notag=new.notagblowing and noplan=new.noplanblowing
