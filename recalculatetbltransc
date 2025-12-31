@@ -1,0 +1,457 @@
+sp:BEGIN
+
+declare intItem int default 0;
+
+declare intItem2 int default 0;
+
+declare selisihQty float default 0;
+
+declare selisihQtyb float default 0;
+
+if tgl1=tgl2 THEN
+
+    if pitemid1=pitemid2 then /*tgl1 = tgl2 , pitemid1 = pitemid2 */
+
+        if pitemid1<>0 THEN
+
+        if berbeda=0 THEN /*tgl1 = tgl2 , pitemid1 = pitemid2 , qty1 = qty2  */
+
+            select itemid into intItem from tbltransc where itemid = pitemid1 and periode=tgl1;
+
+            if intitem=0 and (qty2<>0 or qtyb2<>0) THEN
+
+                IF strTipe='in' then
+
+                    IF strTipe2='buy' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,qtyb1,qty1,0,0,0,0,0,0);
+
+                    elseIF strTipe2='cutting' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,qtyb1,qty1,0,0,0,0);
+
+                    end if;
+
+                    if intskip=0 THEN
+
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,qtyb1,qty1,1);
+
+                     end if;
+
+                ELSEIF strTipe='out' then
+
+                    IF strTipe2='sell' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,qtyb1,qty1,0,0);
+
+                    elseIF strTipe2='adj' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,qtyb1,qty1);                        
+
+                    end if;
+
+                    if intskip=0 THEN
+
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,-qtyb1,-qty1,1);
+
+                    end if;
+
+                end if;
+
+            end if;
+
+        else
+
+            set selisihQty=qty2-qty1;
+
+            set selisihQtyb=qtyb2-qtyb1;
+
+            select itemid into intItem from tbltransc where itemid = pitemid1 and periode=tgl1;
+
+            if intitem>0 THEN
+
+                IF strTipe='in' then
+
+                    if strtipe2='buy' then
+
+                       UPDATE tbltransc set buy_inkg=buy_inkg + selisihQty, buy_inro=buy_inro + selisihQtyb where itemid=pitemid1 and periode=tgl1;
+
+                    elseif strtipe2='cutting' then
+
+                        UPDATE tbltransc set cut_inkg=cut_inkg + selisihQty, cut_inro=cut_inro + selisihQtyb where itemid=pitemid1 and periode=tgl1;
+
+                    end if;
+
+                    if intskip=0 THEN
+
+                           call updatesaldoawaltbltransc(tgl1,pitemid1,selisihQtyb,selisihqty,0);
+
+                    end if;
+
+                ELSEIF strTipe='out' then                
+
+                    IF strTipe2='sell' then
+
+                        UPDATE tbltransc set sell_outkg=sell_outkg + selisihQty, sell_outro=sell_outro + selisihQtyb where itemid=pitemid1 and periode=tgl1;
+
+                    elseIF strTipe2='adj' then
+
+                        UPDATE tbltransc set adj_outkg=adj_outkg + selisihQty, adj_outro=adj_outro+selisihQtyb where itemid=pitemid1 and periode=tgl1;
+
+                    end if;                              
+
+                    if intskip=0 THEN
+
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,-selisihqtyb,-selisihqty,0);
+
+                    end if;
+
+                end if;
+
+            ELSE
+
+                IF strTipe='in' then
+
+                    IF strTipe2='buy' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,qtyb2,qty2,0,0,0,0,0,0);
+
+                    elseIF strTipe2='cutting' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,qtyb2,qty2,0,0,0,0);
+
+                    end if;
+
+                    if intskip=0 THEN
+
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,qtyb2,qty2,1);
+
+                     end if;
+
+                ELSEIF strTipe='out' then
+
+                    IF strTipe2='sell' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,qtyb2,qty2,0,0);
+
+                    elseIF strTipe2='adj' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,qtyb2,qty2);                        
+
+                    end if;
+
+                    if intskip=0 THEN
+
+                        call updatesaldoawaltbltransc(tgl1,pitemid1,-qtyb2,-qty2,1);
+
+                    end if;
+
+                end if;
+
+            end if;
+
+        end if;
+
+    end if;
+
+    ELSE  /* jika pitemid1 <> pitemid2 */
+
+        /*item lama*/
+
+        if pitemid1<>0 THEN
+
+        select itemid into intItem from tbltransc where itemid = pitemid1 and periode=tgl1;
+
+        if intitem>0 and (qty1<>0 or qtyb1<>0) THEN
+
+            IF strTipe='in' then
+
+                    if strtipe2='buy' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,qtyb1,qty1,0,0,0,0,0,0);
+
+                    elseif strtipe2='cutting' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,qtyb1,qty1,0,0,0,0);
+
+                    end if;
+
+                if intskip=0 THEN
+
+                    call updatesaldoawaltbltransc(tgl1,pitemid1,qtyb1,qty1,1);
+
+                end if;
+
+            ELSEIF strTipe='out' then
+
+                    IF strTipe2='sell' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,qtyb1,qty1,0,0);
+
+                    elseIF strTipe2='adj' then
+
+                        insert into tbltransc values(tgl1,now(),strUser,pitemid1,packid,0,0,0,0,0,0,0,0,qtyb1,qty1);                        
+
+                    end if;
+
+                if intskip=0 THEN
+
+                    call updatesaldoawaltbltransc(tgl1,pitemid1,-qtyb1,-qty1,1);
+
+                end if;
+
+            end if;
+
+        end if;
+
+        end if;
+
+        /*item baru*/
+
+        if pitemid2<>0 THEN
+
+        select itemid into intItem from tbltransc where itemid = pitemid2 and periode=tgl2;
+
+        if intitem>0 and (qty2<>0 or qtyb2<>0) THEN
+
+            IF strTipe='in' then
+
+                    if strtipe2='buy' then
+
+                        UPDATE tbltransc set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+
+                    elseif strtipe2='cutting' then
+
+                        UPDATE tbltransc set cut_inkg=cut_inkg + qty2, cut_inro=cut_inro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+
+                    end if;
+
+                if intskip=0 THEN
+
+                    call updatesaldoawaltbltransc(tgl2,pitemid2,qtyb2,qty2,0);
+
+                end if;
+
+            ELSEIF strTipe='out' then
+
+                IF strTipe2='sell' then
+
+                    UPDATE tbltransc set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='adj' then
+
+                    UPDATE tbltransc set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+
+                end if;                              
+
+                if intskip=0 THEN
+
+                    call updatesaldoawaltbltransc(tgl2,pitemid2,-qtyb2,-qty2,0);
+
+                end if;
+
+            end if;            
+
+        ELSE
+
+            if (qty2<>0 or qtyb2<>0) then
+
+                IF strTipe='in' then            
+
+                    IF strTipe2='buy' then
+
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,qtyb2,qty2,0,0,0,0,0,0);
+
+                    elseIF strTipe2='cutting' then
+
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,qtyb2,qty2,0,0,0,0);
+
+                    end if;                
+
+                    if intskip=0 THEN
+
+                        call updatesaldoawaltbltransc(tgl2,pitemid2,qtyb2,qty2,1);
+
+                    end if;
+
+                ELSEIF strTipe='out' then
+
+                    IF strTipe2='sell' then
+
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,qtyb2,qty2,0,0);
+
+                    elseIF strTipe2='adj' then
+
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,qtyb2,qty2);                        
+
+                    end if;
+
+                    if intskip=0 THEN
+
+                        call updatesaldoawaltbltransc(tgl2,pitemid2,-qtyb2,-qty2,1);
+
+                    end if;
+
+                end if;            
+
+            end if;
+
+        end if;
+
+    end if;
+
+end if;
+
+ELSE  
+
+    /* tgl1 <> tgl2 */
+
+    /* if pitemid1=pitemid2 then pitemid1 = pitemid2 */
+
+    /*item lama*/    
+
+    if pitemid1<>0 THEN
+
+    select itemid into intItem from tbltransc where itemid = pitemid1 and periode=tgl1;
+
+     if intitem>0 and (qty1<>0 or qtyb1<>0)  THEN
+
+        IF strTipe='in' then
+
+            if strtipe2='buy' then
+
+                UPDATE tbltransc set buy_inkg=buy_inkg - qty1, buy_inro=buy_inro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+
+            elseif strtipe2='cutting' then
+
+                UPDATE tbltransc set cut_inkg=cut_inkg - qty1, cut_inro=cut_inro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+
+            end if;
+
+            if intskip=0 THEN
+
+                call updatesaldoawaltbltransc(tgl1,pitemid1,-qtyb1,-qty1,0);
+
+            end if;            
+
+        ELSEIF strTipe='out' then
+
+            IF strTipe2='sell' then
+
+                UPDATE tbltransc set sell_outkg=sell_outkg - qty1, sell_outro=sell_outro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+
+            elseIF strTipe2='adj' then
+
+                UPDATE tbltransc set adj_outkg=adj_outkg - qty1, adj_outro=adj_outro-qtyb1 where itemid=pitemid1 and periode=tgl1;
+
+            end if;                              
+
+            if intskip=0 THEN
+
+                call updatesaldoawaltbltransc(tgl1,pitemid1,qtyb1,qty1,0);
+
+            end if;
+
+        end if;            
+
+      end if;
+
+end if;
+
+    /*item baru*/
+
+    if pitemid2<>0 THEN
+
+    select itemid into intItem2 from tbltransc where itemid = pitemid2 and periode=tgl2;
+
+         if intitem2>0 and (qty2<>0 or qtyb2<>0) THEN
+
+            IF strTipe='in' then
+
+                if strtipe2='buy' then
+
+                    UPDATE tbltransc set buy_inkg=buy_inkg + qty2, buy_inro=buy_inro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+
+                elseif strtipe2='cutting' then
+
+                    UPDATE tbltransc set cut_inkg=cut_inkg + qty2, cut_inro=cut_inro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+
+                end if;
+
+                if intskip=0 THEN
+
+                    call updatesaldoawaltbltransc(tgl2,pitemid2,qtyb2,qty2,0);
+
+                end if;
+
+            ELSEIF strTipe='out' then
+
+                IF strTipe2='sell' then
+
+                    UPDATE tbltransc set sell_outkg=sell_outkg + qty2, sell_outro=sell_outro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+
+                elseIF strTipe2='adj' then
+
+                    UPDATE tbltransc set adj_outkg=adj_outkg + qty2, adj_outro=adj_outro+qtyb2 where itemid=pitemid2 and periode=tgl2;
+
+                end if;                              
+
+                if intskip=0 THEN
+
+                    call updatesaldoawaltbltransc(tgl2,pitemid2,-qtyb2,-qty2,0);
+
+                end if;
+
+            end if;            
+
+        ELSE
+
+            if (qty2<>0 or qtyb2<>0) then
+
+                IF strTipe='in' then
+
+                    IF strTipe2='buy' then
+
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,qtyb2,qty2,0,0,0,0,0,0);
+
+                    elseIF strTipe2='cutting' then
+
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,qtyb2,qty2,0,0,0,0);
+
+                    end if;                
+
+                    if intskip=0 THEN
+
+                        call updatesaldoawaltbltransc(tgl2,pitemid2,qtyb2,qty2,1);
+
+                    end if;
+
+                ELSEIF strTipe='out' then          
+
+                    IF strTipe2='sell' then
+
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,qtyb2,qty2,0,0);
+
+                    elseIF strTipe2='adj' then
+
+                        insert into tbltransc values(tgl2,now(),strUser,pitemid2,packid,0,0,0,0,0,0,0,0,qtyb2,qty2);                        
+
+                    end if;
+
+                    if intskip=0 THEN
+
+                        call updatesaldoawaltbltransc(tgl2,pitemid2,-qtyb2,-qty2,1);
+
+                    end if;
+
+                end if;
+
+            end if;
+
+           end if;        
+
+    End if;
+
+end if;
+
+END
