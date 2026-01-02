@@ -1,0 +1,303 @@
+BEGIN
+
+DECLARE n Int DEFAULT 0;
+
+DECLARE m Int DEFAULT 0;
+
+DECLARE dblberat decimal(10,2) default 0;
+
+DECLARE dblberat2 decimal(10,2) default 0;
+
+DECLARE intbeda Int DEFAULT 0;
+
+
+
+declare dateTag2 date;
+
+declare strnotrans2 varchar(20) DEFAULT '';
+
+declare strnotag2 varchar(20) default '';
+
+
+
+if new.notagblowing<>'' or new.notagprinting<>'' then
+
+if new.notagprinting='' and old.notagprinting='' then
+
+    if new.notagblowing=old.notagblowing then
+
+        SELECT a.itemid,a.berat into n,dblberat FROM tbltag a where a.notag=new.notagblowing and a.adddate2>='2025-08-31';   
+
+        if n<>0 then 
+
+        	if new.lapid<=0 THEN
+
+            	call recalculateTblTrans (n,old.adddate2,n,new.adddate2,dblberat,dblberat,'out',0,new.addby,0,'cutting');
+
+        	end if;
+
+        /*else
+
+            SELECT a.itemid,a.berat into n,dblberat FROM tblimport a where a.notag=new.notagblowing and a.tgltag>='2025-08-31';   
+
+            if n<>0 then 
+
+                call recalculateTblTrans (n,old.adddate2,n,new.adddate2,dblberat,dblberat,'out',0,new.addby,0,'cutting');
+
+            end if;*/
+
+        end if;
+
+    ELSE
+
+        SELECT a.itemid,a.berat into m,dblberat FROM tbltag a where a.notag=old.notagblowing and a.adddate2>='2025-08-31';
+
+        SELECT a.itemid,a.berat into n,dblberat2 FROM tbltag a where a.notag=new.notagblowing and a.adddate2>='2025-08-31';
+
+        if (n<>0 or m<>0) then
+
+        	if new.lapid<=0 THEN
+
+            	call recalculateTblTrans (m,old.adddate2,n,new.adddate2,dblberat,dblberat2,'out',0,new.addby,0,'cutting'); 
+
+        	end if;
+
+        /*else
+
+            SELECT a.itemid,a.berat into m,dblberat FROM tblimport a where a.notag=old.notagblowing and a.tgltag>='2025-08-31';
+
+            SELECT a.itemid,a.berat into n,dblberat2 FROM tblimport a where a.notag=new.notagblowing and a.tgltag>='2025-08-31';
+
+            if (n<>0 or m<>0) then
+
+                call recalculateTblTrans (m,old.adddate2,n,new.adddate2,dblberat,dblberat2,'out',0,new.addby,0,'cutting'); 
+
+            end if;*/
+
+        end if;
+
+    end if;
+
+ELSEif old.notagprinting<>'' and new.notagprinting='' then
+
+    SELECT a.itemid,a.berat into m,dblberat FROM tbltagp a where a.notag=old.notagprinting and a.adddate2>='2025-08-31';
+
+    if m<>0 then
+
+    	if old.lapid<=0 THEN
+
+        	call recalculateTblTransp (m,old.adddate2,m,old.adddate2,dblberat,0,'out',0,new.addby,0,'cutting');
+
+    	end if;
+
+    end if;
+
+    SELECT a.itemid,a.berat into m,dblberat FROM tbltag a where a.notag=new.notagblowing and a.adddate2>='2025-08-31';
+
+    if m<>0 then 
+
+    	if new.lapid<=0 THEN
+
+        	call recalculateTblTrans (0,new.adddate2,m,new.adddate2,dblberat,dblberat,'out',0,new.addby,0,'cutting');
+
+    	end if;
+
+    /*else
+
+        SELECT a.itemid,a.berat into m,dblberat FROM tblimport a where a.notag=new.notagblowing and a.tgltag>='2025-08-31';
+
+        if m<>0 then 
+
+            call recalculateTblTrans (0,new.adddate2,m,new.adddate2,dblberat,dblberat,'out',0,new.addby,0,'cutting');
+
+        end if;*/
+
+    end if;
+
+ELSEif old.notagprinting='' and new.notagprinting<>'' then
+
+    SELECT a.itemid,a.berat into m,dblberat FROM tbltag a where a.notag=old.notagblowing and a.adddate2>='2025-08-31';
+
+    if m<>0 then 
+
+    	if old.lapid<=0 THEN
+
+        	call recalculateTblTrans (m,old.adddate2,m,old.adddate2,dblberat,0,'out',0,new.addby,0,'cutting');
+
+    	end if;
+
+    /*else
+
+        SELECT a.itemid,a.berat into m,dblberat FROM tblimport a where a.notag=old.notagblowing and a.tgltag>='2025-08-31';
+
+        if m<>0 then 
+
+            call recalculateTblTrans (m,old.adddate2,m,old.adddate2,dblberat,0,'out',0,new.addby,0,'cutting');
+
+        end if;*/
+
+    end if;
+
+    SELECT a.itemid,a.berat into m,dblberat FROM tbltagp a where a.notag=new.notagprinting and a.adddate2>='2025-08-31';
+
+    if m<>0 then
+
+    	if new.lapid<=0 THEN
+
+        	call recalculateTblTransp (0,new.adddate2,m,new.adddate2,dblberat,dblberat,'out',0,new.addby,0,'cutting');
+
+    	end if;
+
+    end if;
+
+ELSE
+
+    SELECT a.itemid,a.berat into m,dblberat FROM tbltagp a where a.notag=old.notagprinting and a.adddate2>='2025-08-31';
+
+    SELECT a.itemid,a.berat into n,dblberat2 FROM tbltagp a where a.notag=new.notagprinting and a.adddate2>='2025-08-31';
+
+    if (n<>0 or m<>0) then
+
+        call recalculateTblTransp (m,old.adddate2,n,new.adddate2,dblberat,dblberat2,'out',0,new.addby,0,'cutting');
+
+    end if;
+
+end if;
+
+ELSE
+
+    if old.beratb<>new.beratb or old.berat<>new.berat THEN
+
+        set intbeda=1;
+
+    ELSE
+
+        set intbeda=0;
+
+    end if;
+
+    call recalculateTblTransC (old.itemid,old.adddate2,new.itemid,new.adddate2,old.berat,new.berat,'in',0,new.addby,0,'cutting',old.beratb,new.beratb,intbeda);
+
+end if;
+
+
+
+/*
+
+if old.adddate2>='2025-08-31' THEN
+
+if old.notagblowing<>'' or old.notagprinting<>'' THEN
+
+
+
+    if old.notagprinting<>'' THEN
+
+
+
+        SELECT p.itemid,p.berat,p.tgllap,p.notrans,p.notag into m,dblberat,datetag2,strnotrans2,strnotag2
+
+         FROM tbllaptagp p where p.notag=old.notagprinting and p.tgllap>='2025-08-31' and p.berat<>0;
+
+
+
+        if m<>0 THEN
+
+            
+
+            update tbltransnotag2 set notrans2='', 
+
+            editdate=old.editdate, editby=old.editby,terpakai=0 where notag=strnotag2 and notrans=strnotrans2 and (tipetrans='printing') and tgltrans=datetag2 and terpakai=1; 
+
+        end if;
+
+    ELSE
+
+
+
+        SELECT b.itemid,b.berat,b.tgllap,b.notrans,b.notag into m,dblberat,datetag2,strnotrans2,strnotag2
+
+         FROM tbllaptag b where b.notag=old.notagblowing and b.tgllap>='2025-08-31' and b.berat<>0;
+
+
+
+		if m<>0 THEN
+
+
+
+            update tbltransnotag2 set notrans2='' , 
+
+            editdate=old.editdate, editby=old.editby,terpakai=0 where notag=strnotag2 and notrans=strnotrans2 and (tipetrans='blowing') and tgltrans=datetag2 and terpakai=1; 
+
+        end if;
+
+
+
+    end if;
+
+
+
+end if;
+
+end if;
+
+
+
+if new.adddate2>='2025-08-31' THEN
+
+if new.notagprinting<>'' or new.notagblowing<>'' then
+
+
+
+    if new.notagprinting='' then
+
+
+
+        SELECT b.itemid,b.berat,b.tgllap,b.notrans,b.notag into n,dblberat,datetag2,strnotrans2,strnotag2 FROM tbllaptag b where b.notag=new.notagblowing and b.tgllap>='2025-08-31' and b.berat<>0 ;  
+
+        
+
+        if n<>0 then
+
+            
+
+            update tbltransnotag2 set notrans2=new.notrans,tgltrans2=new.adddate2, notag2='' , 
+
+            editdate=new.editdate, editby=new.editby, terpakai=1 where notag=strnotag2 and notrans=strnotrans2 and (tipetrans='blowing') and tgltrans=datetag2 and terpakai=0; 
+
+        
+
+        end if;
+
+
+
+    ELSE
+
+
+
+        SELECT p.itemid,p.berat,p.tgllap,p.notrans,p.notag into n,dblberat,datetag2,strnotrans2,strnotag2
+
+        FROM tbllaptagp p where p.notag=new.notagprinting and p.tgllap>='2025-08-31' and p.berat<>0;
+
+
+
+        if n<>0 then
+
+            
+
+		update tbltransnotag2 set notrans2=new.notrans,tgltrans2=new.adddate2, notag2='' , 
+
+        editdate=new.editdate, editby=new.editby, terpakai=1 where notag=strnotag2 and notrans=strnotrans2 and (tipetrans='printing') and tgltrans=datetag2 and terpakai=0; 
+
+        end if;
+
+
+
+    end if;
+
+
+
+end if;
+
+end if;*/
+
+END
