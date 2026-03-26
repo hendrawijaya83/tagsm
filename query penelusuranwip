@@ -1,0 +1,15 @@
+sSQL = " select k.*,k.notransc as notransc,k.adddate2c as adddate2c from" & _
+        " (select x.*,y.tipe,y.nama,y.nama2,w.nama as namab,w.nama2 as nama2b,w.tipe as tipeb from " & _
+        " tblitem w right join ((SELECT a.* " & _
+        " from vwtagblowprintnotag a " & strFilterDate & ") x left join tblitem y on x.itemid=y.itemid) " & _
+        " on w.itemid=x.itemidb " & _
+        " " & strFilterItem & ") k " & strWhUtama & _
+        " order by k.adddate2,k.notagprinting,k.notagblowing"
+'sSQL = sSQL & " union all select k.*,k.notransc as notransc,k.adddate2c as adddate2c from" & _
+        " (select x.*,y.tipe,y.nama,y.nama2,w.nama as namab,w.nama2 as nama2b,w.tipe as tipeb from " & _
+        " tblitem w right join ((SELECT a.* " & _
+        " from vwtagblowprintnotag a " & strFilterDate & ") x left join tblitem y on x.itemid=y.itemid) " & _
+        " on w.itemid=x.itemidb " & _
+        " " & strFilterItem & ") k " & strWhUtamaP & _
+        " order by k.adddate2,k.notagprinting,k.notagblowing"
+        
