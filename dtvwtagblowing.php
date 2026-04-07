@@ -6,21 +6,24 @@
     require_once "../config/configpdo2.php";
     //$table = 'vwtblpoprod2';
 try {
-         //$fk_prodid=$_GET['fk_prodid'];
-         //$printing=$_GET['printing'];
+// Get parameters from request
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $sort = isset($_GET['sort']) ? $_GET['sort'] : 'b.adddate2';
+    $order = isset($_GET['order']) && strtoupper($_GET['order']) === 'DESC' ? 'DESC' : 'ASC';
+    $filterCol = isset($_GET['filter_col']) ? $_GET['filter_col'] : '';
+    $filterVal = isset($_GET['filter_val']) ? $_GET['filter_val'] : '';
+    $filterMode = isset($_GET['filter_mode']) ? $_GET['filter_mode'] : 'contains';
+    $search = isset($_GET['search']) ? $_GET['search'] : '';
+    $dateFrom = isset($_GET['date_from']) ? $_GET['date_from'] : '';
+    $dateTo = isset($_GET['date_to']) ? $_GET['date_to'] : '';
+    
+    //$strquery="SELECT a.notag, i.nama , a.berat, a.adddate,
+      //  a.addby, i.itemid, a.adddate2 as tgltag, a.notrans as noref 
+      //  from tbltag a join tblitem i on a.itemid=i.itemid
+      //  order by a.adddate desc";
 
-        //if ($printing=="PRINTING")
-/*             {$strquery="SELECT a.notag, i.nama, a.berat, a.adddate,
-        a.addby, i.itemid, a.adddate2 as tgltag, a.notrans as noref, '' as status ,'1' as printing
-         from tbltagp a left join (select itemid,nama from vwtblitemnama) i on a.itemid=i.itemid
-         order by a.adddate desc";}
- */         //ELSE            
-                $strquery="SELECT a.notag, i.nama , a.berat, a.adddate,
-        a.addby, i.itemid, a.adddate2 as tgltag, a.notrans as noref 
-        from tbltag a join tblitem i on a.itemid=i.itemid
-        order by a.adddate desc";
-
-        $stmt = $pdo->prepare($strquery);
+/*         $stmt = $pdo->prepare($strquery);
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
     
@@ -38,10 +41,98 @@ try {
             'rows' => $rows,
             'total' => count($rows)
         ]);
-    } catch (PDOException $e) {
+ */
+// Define allowed columns to prevent SQL injection
+    $allowedColumns = ['b.notag', 'i.nama', 'b.berat', 'b.adddate',
+     'b.addby', 'b.itemid', 'b.adddate2','b.notrans'];
+    if (!in_array($sort, $allowedColumns)) {
+        $sort = 'b.adddate2';
+    }
+    
+    // Build WHERE conditions
+    $whereConditions = [];
+    $params = [];
+    
+    // Column filter
+    if (!empty($filterCol) && !empty($filterVal) && in_array($filterCol, $allowedColumns)) {
+        if ($filterMode === 'contains') {
+            $whereConditions[] = "$filterCol LIKE :filter_val";
+            $params[':filter_val'] = "%$filterVal%";
+        } elseif ($filterMode === 'exact') {
+            $whereConditions[] = "$filterCol = :filter_val";
+            $params[':filter_val'] = $filterVal;
+        } elseif ($filterMode === 'starts') {
+            $whereConditions[] = "$filterCol LIKE :filter_val";
+            $params[':filter_val'] = "$filterVal%";
+        }
+    }
+    
+    // Global search (search in multiple columns)
+    if (!empty($search)) {
+        $searchConditions = [];
+        $searchColumns = ['b.notag', 'i.nama', 'b.notrans'];
+        foreach ($searchColumns as $col) {
+            $searchConditions[] = "$col LIKE :search";
+        }
+        $whereConditions[] = "(" . implode(" OR ", $searchConditions) . ")";
+        $params[':search'] = "%$search%";
+    }
+    
+    // Date range filter
+    if (!empty($dateFrom)) {
+        $whereConditions[] = "b.adddate2 >= :date_from";
+        $params[':date_from'] = $dateFrom;
+    }
+    if (!empty($dateTo)) {
+        $whereConditions[] = "b.adddate2 <= :date_to";
+        $params[':date_to'] = $dateTo . " 23:59:59";
+    }
+    
+    $whereSQL = !empty($whereConditions) ? "WHERE " . 
+    implode(" AND ", $whereConditions) : "";
+    
+    // Get total count
+    $countSQL = "SELECT COUNT(*) as total FROM tbltag b join tblitem i 
+    on b.itemid=i.itemid $whereSQL";
+    $countStmt = $pdo->prepare($countSQL);
+    $countStmt->execute($params);
+    $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Calculate pagination
+    $offset = ($page - 1) * $limit;
+    $totalPages = ceil($total / $limit);
+    
+    // Get paginated data
+    $dataSQL = "SELECT b.notag, i.nama, b.berat, b.adddate, b.addby, b.itemid
+    , DATE(b.adddate2) as tgltag , b.notrans as noref
+                FROM tbltag b join tblitem i on b.itemid=i.itemid
+                $whereSQL 
+                ORDER BY $sort $order 
+                LIMIT :limit OFFSET :offset";
+    
+    $stmt = $pdo->prepare($dataSQL);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    
+    // Return JSON response
+    echo json_encode([
+        'columns' => ['notag', 'nama', 'berat', 'adddate', 'addby', 'itemid', 'tgltag', 'noref'],
+        'rows' => $rows,
+        'total' => (int)$total,
+        'page' => $page,
+        'limit' => $limit,
+        'totalPages' => $totalPages
+    ]);
+    
+        } catch (PDOException $e) {
         http_response_code(500);
-        echo json_encode([
-        'success' => false,
+        echo json_encode([        
         'error' => $e->getMessage()
     ]);   }
 //}
