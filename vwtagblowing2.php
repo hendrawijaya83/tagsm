@@ -363,9 +363,9 @@ if (!defined('SECURE_ACCESS')) {
         <div class="date-range-group filter-group">
             <label>📅 Date Range Filter (created_at)</label>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <input type="date" id="dateFrom" placeholder="From date">
+                <input type="date" id="dateFrom" placeholder="From date" value="<?php echo date('Y-m-d', strtotime('-1 month')); ?>">
                 <span>→</span>
-                <input type="date" id="dateTo" placeholder="To date">
+                <input type="date" id="dateTo" placeholder="To date" value="<?php echo date('Y-m-d'); ?>">
                 <button id="clearDateBtn" class="badge-clear" style="background:#fee2e2;">Clear dates</button>
             </div>
         </div>
@@ -431,7 +431,34 @@ if (!defined('SECURE_ACCESS')) {
     </div>
  --></div>
 
-<script>
+<script type="text/javascript">
+    $(document).ready(function() {
+    window.addEventListener('beforeunload', function() {
+        //safeStorage.setItem('currentPage', currentPage);
+        //console.log("Saving lastitem2:", strlastitem2);
+        safeStorage.setItem('lastitem2', strlastitem2);
+        //safeStorage.setItem('lastprinting', strlastprinting);
+        });
+  
+    const safeStorage = {
+    setItem: (key, value) => {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {
+        // Fallback to sessionStorage or do nothing
+        console.warn("LocalStorage not available, preferences won't persist");
+      }
+    },
+    getItem: (key) => {
+      try {
+        return localStorage.getItem(key);
+      } catch (e) {
+        return null;
+      }
+    }
+  };
+    let strlastitem2 = safeStorage.getItem('lastitem2') || "";
+
     // ============================================================
     // CONFIGURATION - Replace with your actual backend endpoint
     // The API must accept query parameters and return JSON with date range support
@@ -448,14 +475,13 @@ if (!defined('SECURE_ACCESS')) {
     let currentFilterCol = '';
     let currentFilterVal = '';
     let currentFilterMode = 'contains';
-    let currentGlobalSearch = '';
+    let currentGlobalSearch = strlastitem2;
     let currentDateFrom = '';
     let currentDateTo = '';
     
     let totalRecords = 0;
     let totalPages = 1;
     let columnsList = [];
-    
     // DOM elements
     const globalSearchInput = document.getElementById('globalSearch');
     const refreshBtn = document.getElementById('refreshBtn');
@@ -561,6 +587,7 @@ if (!defined('SECURE_ACCESS')) {
             ⚠️ Error: ${err.message}</td></tr>`;
         } finally {
             setTableLoading(false);
+            let strlastitem2 = safeStorage.getItem('lastitem2') || "";
         }
     }
     
@@ -670,6 +697,7 @@ if (!defined('SECURE_ACCESS')) {
     function onGlobalSearch() {
         currentGlobalSearch = globalSearchInput.value;
         currentPage = 1;
+        strlastitem2=currentGlobalSearch;
         fetchDataFromApi();
     }
     
@@ -703,8 +731,9 @@ if (!defined('SECURE_ACCESS')) {
     }
     
     function onClearDateRange() {
-        dateFromInput.value = '';
-        dateToInput.value = '';
+        //var today = new Date();
+        dateFromInput.value =  '';
+        dateToInput.value =  '';
         currentDateFrom = '';
         currentDateTo = '';
         currentPage = 1;
@@ -729,6 +758,10 @@ if (!defined('SECURE_ACCESS')) {
     }
     
     function bindEvents() {
+        globalSearchInput.value = strlastitem2;
+        currentDateFrom = dateFromInput.value;
+        currentDateTo = dateToInput.value;
+
         globalSearchInput.addEventListener('input', onGlobalSearch);        
         refreshBtn.addEventListener('click', () => fetchDataFromApi());        
         applyFilterBtn.addEventListener('click', onApplyFilter);
@@ -744,12 +777,12 @@ if (!defined('SECURE_ACCESS')) {
     }
     
     async function init() {
-        bindEvents();
-        
+        bindEvents();        
         await fetchDataFromApi();
     }
     
     init();
+    });
 </script>
 </body>
 </html>
