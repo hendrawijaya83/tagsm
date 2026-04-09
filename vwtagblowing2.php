@@ -173,6 +173,27 @@ if (!defined('SECURE_ACCESS')) {
             gap: 12px;
             align-items: center;
         }
+        /* Total weight card styling */
+        .total-weight-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 8px 10px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .total-weight-card span:first-child {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        .total-weight-card .weight-value {
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
         .sort-indicator {
             display: flex;
             gap: 10px;
@@ -320,6 +341,7 @@ if (!defined('SECURE_ACCESS')) {
             .search-box input { width: 100%; }
             .filter-group select, .filter-group input { min-width: auto; }
             .pagination-container { flex-direction: column; align-items: stretch; }
+            .stats-bar { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
@@ -384,14 +406,20 @@ if (!defined('SECURE_ACCESS')) {
     </div>
 
     <div class="stats-bar">
-        <div>📊 Showing <span id="rowCount">0</span> records | Total filtered: <span id="filteredTotal">0</span> | Source: <span id="totalCount">0</span></div>
+        <div>📊 Showing <span id="rowCount">0</span> records | Total filtered: <span id="filteredTotal">0</span> | Source: <span id="totalCount">0</span>
+            <div class="total-weight-card">
+            <span>⚖️ TOTAL WEIGHT (filtered):</span>
+            <span class="weight-value" id="totalWeightDisplay">0.00</span>
+            <span>kg</span>
+            </div>
+        </div>
         <div class="sort-indicator">
             <span>Sort by:</span>
             <button data-sort="none" class="sort-btn active">None</button>
             <button data-sort="b.notag" class="sort-btn">NOTAG</button>
             <button data-sort="i.nama" class="sort-btn">NAMA</button>
             <button data-sort="b.notrans" class="sort-btn">NOREF</button>
-            <button data-sort="b.itemid" class="sort-btn">ITEMID</button>
+            <!-- <button data-sort="b.itemid" class="sort-btn">ITEMID</button> -->
             <button data-sort="b.addby" class="sort-btn">ADDBY</button>
             <button data-sort="b.adddate2" class="sort-btn">TGL</button>
         </div>
@@ -433,10 +461,34 @@ if (!defined('SECURE_ACCESS')) {
 
 <script type="text/javascript">
     $(document).ready(function() {
+        // ============================================================
+    // ACCOUNTING NUMBER FORMATTER
+    // Formats numbers with thousand separators, 2 decimal places,
+    // and parentheses for negative values (accounting style)
+    // ============================================================
+    function formatAccounting(value) {
+        if (value === null || value === undefined || value === '') return '—';
+        let num = parseFloat(value);
+        if (isNaN(num)) return value;
+        
+        const options = {
+            style: 'decimal',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            useGrouping: true
+        };
+        let formatted = new Intl.NumberFormat('en-US', options).format(Math.abs(num));
+        if (num < 0) {
+            return `(${formatted})`;
+        }
+        return formatted;
+    }
+
     window.addEventListener('beforeunload', function() {
         //safeStorage.setItem('currentPage', currentPage);
         //console.log("Saving lastitem2:", strlastitem2);
         safeStorage.setItem('lastitem2', strlastitem2);
+        safeStorage.setItem('pageSizelast', pageSize);
         //safeStorage.setItem('lastprinting', strlastprinting);
         });
   
@@ -458,6 +510,7 @@ if (!defined('SECURE_ACCESS')) {
     }
   };
     let strlastitem2 = safeStorage.getItem('lastitem2') || "";
+    let pageSize = safeStorage.getItem('pageSizelast') || 10;
 
     // ============================================================
     // CONFIGURATION - Replace with your actual backend endpoint
@@ -469,7 +522,7 @@ if (!defined('SECURE_ACCESS')) {
     
     // State
     let currentPage = 1;
-    let pageSize = 10;
+    //let pageSize = 10;
     let currentSortColumn = 'none';
     let currentSortOrder = 'asc';
     let currentFilterCol = '';
@@ -509,7 +562,8 @@ if (!defined('SECURE_ACCESS')) {
     const lastPageBtn = document.getElementById('lastPageBtn');
     const pageSizeSelect = document.getElementById('pageSizeSelect');
     const pageNumbersContainer = document.getElementById('pageNumbersContainer');
-    
+    const totalWeightDisplaySpan = document.getElementById('totalWeightDisplay');
+
     function setTableLoading(isLoading) {
         if (isLoading) {
             tableBody.innerHTML = `<tr class="empty-row">
@@ -517,7 +571,18 @@ if (!defined('SECURE_ACCESS')) {
             </div> Loading from server...</td></tr>`;
         }
     }
-    
+    // Calculate total weight from filtered dataset (server-side simulation)
+    function calculateTotalWeight(rows) {
+        // weight is at index 2 (3th column)
+        let sum = 0;
+        for (const row of rows) {
+            const weight = parseFloat(row[2]);
+            if (!isNaN(weight)) {
+                sum += weight;
+            }
+        }
+        return sum;
+    }
     // Build API URL with all parameters including date range
     function buildApiUrl() {
         const params = new URLSearchParams();
@@ -565,6 +630,7 @@ if (!defined('SECURE_ACCESS')) {
             
             columnsList = responseData.columns;
             totalRecords = responseData.total;
+            totalWeight = responseData.totalWeight || 0;
             totalPages = responseData.totalPages || Math.ceil(responseData.total / pageSize);
             if (responseData.page) currentPage = responseData.page;
             
@@ -576,15 +642,20 @@ if (!defined('SECURE_ACCESS')) {
             
             // update filtered total display
             filteredTotalSpan.innerText = totalRecords;
+            
             totalCountSpan.innerText = responseData.rows ? 'source: '
              + (USE_MOCK_BACKEND ? 0 : 'N/A') : 'N/A';
-            if (!USE_MOCK_BACKEND) totalCountSpan.innerText = totalRecords;
+            if (!USE_MOCK_BACKEND) totalCountSpan.innerText = formatAccounting(totalWeight) + ' kg';
             else totalCountSpan.innerText = 0;
-            
+
+            const totalWeightfilter = calculateTotalWeight(responseData.rows);
+            // Update total weight display
+            totalWeightDisplaySpan.innerText = formatAccounting(totalWeightfilter); //.toFixed(2);
         } catch (err) {
             console.error(err);
             tableBody.innerHTML = `<tr class="empty-row"><td colspan="10">
             ⚠️ Error: ${err.message}</td></tr>`;
+            totalWeightDisplaySpan.innerText = '0.00';
         } finally {
             setTableLoading(false);
             let strlastitem2 = safeStorage.getItem('lastitem2') || "";
@@ -761,7 +832,7 @@ if (!defined('SECURE_ACCESS')) {
         globalSearchInput.value = strlastitem2;
         currentDateFrom = dateFromInput.value;
         currentDateTo = dateToInput.value;
-
+        pageSizeSelect.value=pageSize;
         globalSearchInput.addEventListener('input', onGlobalSearch);        
         refreshBtn.addEventListener('click', () => fetchDataFromApi());        
         applyFilterBtn.addEventListener('click', onApplyFilter);
