@@ -44,7 +44,7 @@ try {
  */
 // Define allowed columns to prevent SQL injection
     $allowedColumns = ['b.notag', 'i.nama', 'b.berat', 'b.adddate',
-     'b.addby', 'b.adddate2','b.notrans'];
+     'b.addby', 'b.adddate2','b.notrans', 'b.notagblowing'];
     if (!in_array($sort, $allowedColumns)) {
         $sort = 'b.adddate2';
     }
@@ -67,6 +67,8 @@ try {
             $filterCol = 'b.addby';
         } elseif ($filterCol === 'tgltag') {
             $filterCol = 'b.adddate2';
+        } elseif ($filterCol === 'notagblowing') {
+            $filterCol = 'b.notagblowing';
         }
     }
 
@@ -110,13 +112,13 @@ try {
     implode(" AND ", $whereConditions) : "";
     
     // Get total count
-    $countSQL = "SELECT COUNT(*) as total FROM tbltag b join tblitem i 
+    $countSQL = "SELECT COUNT(*) as total FROM tbltagp b join tblitem i 
     on b.itemid=i.itemid $whereSQL";
     $countStmt = $pdo->prepare($countSQL);
     $countStmt->execute($params);
     $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    $countSQL = "SELECT sum(b.berat) as total_weight FROM tbltag b join tblitem i 
+    $countSQL = "SELECT sum(b.berat) as total_weight FROM tbltagp b join tblitem i 
     on b.itemid=i.itemid $whereSQL";
     $countStmt = $pdo->prepare($countSQL);
     $countStmt->execute($params);
@@ -128,8 +130,8 @@ try {
     
     // Get paginated data
     $dataSQL = "SELECT b.notag, i.nama, b.berat, b.adddate, b.addby
-    , DATE(b.adddate2) as tgltag , b.notrans as noref
-                FROM tbltag b join tblitem i on b.itemid=i.itemid
+    , DATE(b.adddate2) as tgltag , b.notrans as noref, b.notagblowing
+                FROM tbltagp b join tblitem i on b.itemid=i.itemid
                 $whereSQL 
                 ORDER BY $sort $order 
                 LIMIT :limit OFFSET :offset";
@@ -146,7 +148,7 @@ try {
     
     // Return JSON response
     echo json_encode([
-        'columns' => ['notag', 'nama', 'berat', 'adddate', 'addby', 'tgltag', 'noref'],
+        'columns' => ['notag', 'nama', 'berat', 'adddate', 'addby', 'tgltag', 'noref', 'notagblowing'],
         'rows' => $rows,
         'total' => (int)$total,
         'page' => $page,
