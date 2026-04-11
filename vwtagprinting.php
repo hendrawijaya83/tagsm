@@ -383,7 +383,7 @@ if (!defined('SECURE_ACCESS')) {
         
         <!-- DATE RANGE FILTER SECTION -->
         <div class="date-range-group filter-group">
-            <label>📅 Date Range Filter (created_at)</label>
+            <label>📅 Date Range Filter</label>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <input type="date" id="dateFrom" placeholder="From date" value="<?php echo date('Y-m-d', strtotime('-1 month')); ?>">
                 <span>→</span>
@@ -423,6 +423,8 @@ if (!defined('SECURE_ACCESS')) {
             <button data-sort="b.addby" class="sort-btn">ADDBY</button>
             <button data-sort="b.adddate2" class="sort-btn">TGL</button>
             <button data-sort="b.notagblowing" class="sort-btn">NOTAGBLOWING</button>
+            <button data-sort="b.shiftid" class="sort-btn">SHIFT</button>
+            <button data-sort="b.kodemesin" class="sort-btn">MESIN</button>
         </div>
     </div>
 

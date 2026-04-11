@@ -9,7 +9,7 @@ try {
 // Get parameters from request
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
-    $sort = isset($_GET['sort']) ? $_GET['sort'] : 'b.adddate2';
+    $sort = isset($_GET['sort']) ? $_GET['sort'] : 'b.adddate';
     $order = isset($_GET['order']) && strtoupper($_GET['order']) === 'DESC' ? 'DESC' : 'ASC';
     $filterCol = isset($_GET['filter_col']) ? $_GET['filter_col'] : '';
     $filterVal = isset($_GET['filter_val']) ? $_GET['filter_val'] : '';
@@ -44,9 +44,9 @@ try {
  */
 // Define allowed columns to prevent SQL injection
     $allowedColumns = ['b.notag', 'i.nama', 'b.berat', 'b.adddate',
-     'b.addby', 'b.adddate2','b.notrans'];
+     'b.addby', 'b.adddate2','b.notrans', 'b.shiftid', 'b.kodemesin'];
     if (!in_array($sort, $allowedColumns)) {
-        $sort = 'b.adddate2';
+        $sort = 'b.adddate';
     }
     
     // Build WHERE conditions
@@ -67,6 +67,10 @@ try {
             $filterCol = 'b.addby';
         } elseif ($filterCol === 'tgltag') {
             $filterCol = 'b.adddate2';
+        } elseif ($filterCol === 'shiftid') {
+            $filterCol = 'b.shiftid';
+        } elseif ($filterCol === 'kodemesin') {
+            $filterCol = 'b.kodemesin';
         }
     }
 
@@ -88,7 +92,7 @@ try {
     // Global search (search in multiple columns)
     if (!empty($search)) {
         $searchConditions = [];
-        $searchColumns = ['b.notag', 'i.nama', 'b.notrans'];
+        $searchColumns = ['b.notag', 'i.nama', 'b.notrans', 'b.shiftid', 'b.kodemesin'];
         foreach ($searchColumns as $col) {
             $searchConditions[] = "$col LIKE :search";
         }
@@ -128,7 +132,7 @@ try {
     
     // Get paginated data
     $dataSQL = "SELECT b.notag, i.nama, b.berat, b.adddate, b.addby
-    , DATE(b.adddate2) as tgltag , b.notrans as noref
+    , DATE(b.adddate2) as tgltag , b.notrans as noref,b.shiftid,b.kodemesin
                 FROM tbltag b join tblitem i on b.itemid=i.itemid
                 $whereSQL 
                 ORDER BY $sort $order 
@@ -146,7 +150,7 @@ try {
     
     // Return JSON response
     echo json_encode([
-        'columns' => ['notag', 'nama', 'berat', 'adddate', 'addby', 'tgltag', 'noref'],
+        'columns' => ['notag', 'nama', 'berat', 'adddate', 'addby', 'tgltag', 'noref', 'shiftid', 'kodemesin'],
         'rows' => $rows,
         'total' => (int)$total,
         'page' => $page,
