@@ -1,0 +1,157 @@
+BEGIN
+DECLARE n Int DEFAULT 0;
+DECLARE i Int DEFAULT 0;
+DECLARE m Int DEFAULT 0;
+DECLARE j Int DEFAULT 0;
+declare litemid1 int DEFAULT 0;
+declare litemid2 int DEFAULT 0;
+declare dateTag1 date;
+declare dateTag2 date;
+declare decQty1 decimal(10,2) default 0;
+declare decQty2 decimal(10,2) default 0;
+declare lpackid int default 0;
+declare strUser varchar(20);
+declare strTipe varchar(20);
+declare intitem int DEFAULT 0;
+declare sitemid1 varchar(20) DEFAULT '';
+declare sitemid2 varchar(20) DEFAULT '';
+declare strNoTrans varchar(20) DEFAULT '';
+declare lidjb int DEFAULT 0;
+declare adddatejb date;
+declare intlapid int DEFAULT 0;
+declare lnoplan int DEFAULT 0;
+
+delete from tbltrans where itemid=pitemid;
+delete from tbltag where noplan=0 and lapid>0 and adddate2>='2025-08-31' and itemid=pitemid;
+delete from tbltagc where lapid>0 and adddate2>='2025-08-31' and notagblowing<>'' and itemid=pitemid;
+
+    set intitem = pitemid;
+    SELECT COUNT(itemid) INTO m FROM tbltag where adddate2>='2025-08-31' and berat<>0 and itemid=intitem;
+    SET j=0;
+    WHILE j<m DO
+        SELECT notag,itemid,adddate2,addby,'in',berat,0,lapid,noplan into 
+        sitemid2,litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,intlapid,lnoplan FROM tbltag 
+        where adddate2>='2025-08-31' and berat<>0 and itemid=intitem LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if lnoplan<>0 then
+            if litemid2<>0 then
+                call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'blowing');
+            end if;
+        else
+            if litemid2<>0 then
+                if intlapid<=0 then
+                    if decQty2>0 then
+                        set lpackid=1;
+                    elseif decQty2<0 then
+                        set lpackid=-1;
+                    end if;
+                    call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,-decQty1,-decQty2,'out',-lpackid,strUser,1,'adj');
+                end if;
+            end if;
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);
+
+    SELECT COUNT(itemid) INTO m FROM tbltagjb where tgljb>='2025-08-31' and berat<>0 and itemid=intitem and (tipejb='belib');
+    SET j=0;
+    WHILE j<m DO
+        SELECT notag,itemid,tgljb,editdate,editby,tipejb,berat,0,idjb,notrans into 
+        sitemid2,litemid2,dateTag2,adddatejb,strUser,strTipe,decQty2,lpackid,lidjb,strNoTrans FROM tbltagjb 
+        where tgljb>='2025-08-31' and berat<>0 and itemid=intitem and (tipejb='belib') LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if strtipe='belib' then
+	        insert into tbltag (notag,adddate,adddate2,addby,editdate,editby,shiftid,berat,itemid,notrans,lapid) 
+ VALUES (sitemid2,adddatejb,dateTag2,struser,adddatejb,strUser,1,decQty2,litemid2,strnotrans,lidjb) 
+ on duplicate key update lapid=lidjb;
+            call recalculateTblTrans (0,dateTag2,litemid2,dateTag2,decQty2,decQty2,'in',1,struser,0,'buy');
+        /*call recalculateTblTransnotag (sitemid1,dateTag1,sitemid2,dateTag2,decQty1,decQty2,'in',lpackid,strUser,1,'buy'); */
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    if strtipe='belib' then
+        call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);
+    end if;
+
+    SELECT COUNT(itemid) INTO m FROM tbltagjb where tgljb>='2025-08-31' and (tipejb='jualb') and berat<>0 and itemid=intitem;
+    SET j=0;
+    WHILE j<m DO
+        SELECT notag,itemid,tgljb,editby,tipejb,berat,beratb,idjb,notrans,editdate 
+        into sitemid2,litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,lidjb,strNoTrans,adddatejb  
+        FROM tbltagjb 
+        where tgljb>='2025-08-31' and itemid=intitem and (tipejb='jualb') and berat<>0 LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if strTipe='jualb' then
+            insert into tbltagc (notagblowing,adddate,adddate2,addby,editdate,editby,notrans,lapid) 
+	VALUES (sitemid2,adddatejb,dateTag2,strUser,adddatejb,strUser,strNoTrans,lidjb);
+            call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'out',1,strUser,1,'sell');
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);
+
+    SELECT COUNT(itemid) INTO m FROM tbltagjb where tgljb>='2025-08-31' and (tipejb='adjb') and berat<>0 and itemid=intitem;
+    SET j=0;
+    WHILE j<m DO
+        SELECT notag,itemid,tgljb,editby,tipejb,berat,beratb,idjb,notrans,editdate 
+        into sitemid2,litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,lidjb,strNoTrans,adddatejb  
+        FROM tbltagjb 
+        where tgljb>='2025-08-31' and itemid=intitem and (tipejb='adjb') and berat<>0 LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if strTipe='adjb' then
+            insert into tbltagc (notagblowing,adddate,adddate2,addby,editdate,editby,notrans,lapid) 
+	VALUES (sitemid2,adddatejb,dateTag2,strUser,adddatejb,strUser,strNoTrans,lidjb);
+            call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,'out',1,strUser,1,'adj');
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);
+
+    SELECT COUNT(y.itemid) INTO m FROM tbltagp x join tbltag y on x.notagblowing=y.notag 
+    where (x.adddate2>='2025-08-31' and y.adddate2>='2025-08-31') and x.noplan<>0 and (x.berat<>0 and y.berat<>0) and y.itemid=intitem;
+    SET j=0;
+    WHILE j<m DO
+        SELECT y.notag,y.itemid,x.adddate2,x.addby,'out',y.berat,0,x.lapid
+        into sitemid2,litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,intlapid  
+        FROM tbltagp x 
+        join tbltag y on x.notagblowing=y.notag where y.itemid=intitem and (x.adddate2>='2025-08-31' and y.adddate2>='2025-08-31') 
+        and x.noplan<>0 and (x.berat<>0 and y.berat<>0) LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'printing');
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);
+
+    select COUNT(b.itemid) INTO m from tbltag b join tbltagc c on b.notag=c.notagblowing and b.itemid=intitem 
+    where c.berat=0 and c.notagblowing<>'' and b.berat<>0 and c.adddate2>='2025-08-31' and b.adddate2>='2025-08-31' and c.lapid<=0;
+    SET j=0;
+    WHILE j<m DO
+        select b.notag,b.itemid,c.adddate2,c.addby,'out',b.berat,0,c.lapid 
+        into sitemid2,litemid2,dateTag2,strUser,strTipe,decQty2,lpackid,intlapid 
+        from tbltag b join tbltagc c on b.notag=c.notagblowing and b.itemid=intitem 
+        where c.berat=0 and c.notagblowing<>'' and b.berat<>0 and c.adddate2>='2025-08-31' and b.adddate2>='2025-08-31' and c.lapid<=0 LIMIT j,1;
+        set litemid1=0;
+        set dateTag1=dateTag2;
+        set decQty1=decQty2;
+        if litemid2<>0 then
+            if intlapid<=0 then
+                call recalculateTblTrans (litemid1,dateTag1,litemid2,dateTag2,decQty1,decQty2,strTipe,lpackid,strUser,1,'cutting');
+            end if;
+        end if;
+        SET j = j + 1;
+    END WHILE;
+    call UpdateSaldoAwalTblTransAll(intitem,1,dateTag1);
+
+End
