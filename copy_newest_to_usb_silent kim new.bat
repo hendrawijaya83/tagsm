@@ -69,10 +69,10 @@ exit /b 1
 set "NEWEST_FILE="
 for /f "delims=" %%F in ('dir "%SRC_temp%\%FilePattern%" /a:-d /o-d /b') do (
     set "NEWEST_FILE=%%F"
-    goto :gotfile
+    goto :gotfile2
 )
 
-:gotfile
+:gotfile2
 if "%NEWEST_FILE%"=="" (
 ::    echo [ERROR] No files found in folder: "%SRC_temp%
 ::    pause
